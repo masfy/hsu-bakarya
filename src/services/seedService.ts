@@ -131,7 +131,22 @@ export async function seedFirestoreDatabase(mode: "full" | "clean" = "full"): Pr
 
     // 5. Seed Karya
     let worksToSeed: Work[] = [];
-    if (mode === "full") {
+    if (mode === "clean") {
+      // Hapus semua karya lama di Firestore agar benar-benar bersih (0 karya)
+      const existingWorksSnapshot = await getDocs(collection(db, "works"));
+      for (const docSnap of existingWorksSnapshot.docs) {
+        batch.delete(docSnap.ref);
+      }
+
+      // Hapus akun kontributor mock dari Firestore agar hanya menyisakan Super Admin
+      const existingUsersSnapshot = await getDocs(collection(db, "users"));
+      for (const docSnap of existingUsersSnapshot.docs) {
+        const udata = docSnap.data();
+        if (udata.email !== "alfyarnaim@gmail.com") {
+          batch.delete(docSnap.ref);
+        }
+      }
+    } else {
       worksToSeed = INITIAL_WORKS;
       for (const work of worksToSeed) {
         const workRef = doc(db, "works", work.id);

@@ -401,21 +401,54 @@ export function HomeView({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPublicWorks.slice(0, 6).map((work) => (
-            <WorkCard
-              key={work.id}
-              work={work}
-              mediaTypesList={mediaTypesList}
-              onSelect={() => onOpenWorkDetail(work)}
-              onShare={onShareWork}
-              onSelectContributor={(contribId) => {
-                const found = usersList.find((c) => c.uid === contribId);
-                if (found) onSelectContributor(found);
-              }}
-            />
-          ))}
-        </div>
+        {filteredPublicWorks.length === 0 ? (
+          <div className="bg-white rounded-3xl p-10 sm:p-14 text-center border border-[#14213D]/10 shadow-sm max-w-xl mx-auto space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto shadow-sm">
+              <Sparkles className="w-8 h-8 text-[#F2B84B]" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-display font-extrabold text-[#14213D] text-lg sm:text-xl">
+                Belum Ada Karya yang Diterbitkan
+              </h3>
+              <p className="text-xs sm:text-sm text-[#727782] max-w-md mx-auto leading-relaxed">
+                Database Cloud Firestore dalam keadaan bersih (Clean State). Guru dan Admin dapat masuk untuk mengunggah inovasi media pembelajaran interaktif!
+              </p>
+            </div>
+            {role === "public" ? (
+              <button
+                type="button"
+                onClick={() => onOpenAuthModal("login")}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#14213D] hover:bg-[#167D78] text-white text-xs font-bold shadow-md transition-all"
+              >
+                Masuk / Unggah Karya
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setActiveTab("dashboard")}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#167D78] hover:bg-[#14213D] text-white text-xs font-bold shadow-md transition-all"
+              >
+                Buka Dashboard
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredPublicWorks.slice(0, 6).map((work) => (
+              <WorkCard
+                key={work.id}
+                work={work}
+                mediaTypesList={mediaTypesList}
+                onSelect={() => onOpenWorkDetail(work)}
+                onShare={onShareWork}
+                onSelectContributor={(contribId) => {
+                  const found = usersList.find((c) => c.uid === contribId);
+                  if (found) onSelectContributor(found);
+                }}
+              />
+            ))}
+          </div>
+        )}
       </section>
     </motion.div>
   );

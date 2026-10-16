@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { X, AlertTriangle, KeyRound, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { X, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import { UserAccount } from "../../types";
 
 interface GoogleAuthModalProps {
@@ -24,29 +24,20 @@ export function GoogleAuthModal({
   onSubmitAuth,
 }: GoogleAuthModalProps) {
   const [mode, setMode] = useState<"login" | "register">(initialMode || "login");
-  const [email, setEmail] = useState("alfyarnaim@gmail.com");
-  const [password, setPassword] = useState("kadabakarya");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [institution, setInstitution] = useState("");
   const [district, setDistrict] = useState("Kec. Amuntai Tengah, HSU");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Sort active users: Super Admin first, Admin second, then contributors
-  const activeUsers = [...usersList.filter((u) => !u.isDeleted)].sort((a, b) => {
-    if (a.role === "superAdmin") return -1;
-    if (b.role === "superAdmin") return 1;
-    if (a.role === "admin") return -1;
-    if (b.role === "admin") return 1;
-    return 0;
-  });
-
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
     if (!email.trim() || !email.includes("@")) {
-      setErrorMsg("Masukkan alamat email yang valid (contoh: alfyarnaim@gmail.com).");
+      setErrorMsg("Masukkan alamat email yang valid (contoh: nama@email.com).");
       return;
     }
 
@@ -177,22 +168,15 @@ export function GoogleAuthModal({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="alfyarnaim@gmail.com"
+              placeholder="nama@email.com"
               className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs font-mono outline-none focus:border-[#167D78]"
             />
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-extrabold uppercase text-[#14213D]">
-                Kata Sandi (Password)
-              </label>
-              {email === "alfyarnaim@gmail.com" && (
-                <span className="text-[10px] text-[#167D78] font-bold">
-                  Super Admin: kadabakarya
-                </span>
-              )}
-            </div>
+            <label className="block text-xs font-extrabold uppercase text-[#14213D] mb-1">
+              Kata Sandi (Password)
+            </label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -210,43 +194,6 @@ export function GoogleAuthModal({
               </button>
             </div>
           </div>
-
-          {mode === "login" && (
-            <div className="space-y-1.5 pt-1">
-              <label className="block text-[11px] font-bold text-[#727782]">
-                Pilih Akun Cepat:
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {activeUsers.map((u) => {
-                  const isSelected = email.toLowerCase() === u.email.toLowerCase();
-                  const isSuper = u.role === "superAdmin";
-                  return (
-                    <button
-                      key={u.uid}
-                      type="button"
-                      onClick={() => {
-                        setEmail(u.email);
-                        setPassword(u.tempPassword || "kadabakarya");
-                      }}
-                      className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all flex items-center gap-1.5 ${
-                        isSelected
-                          ? "bg-[#14213D] text-white border-[#14213D] shadow-sm"
-                          : isSuper
-                          ? "bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100"
-                          : "bg-[#F8F7F2] text-[#20252D] border-[#14213D]/15 hover:bg-gray-100"
-                      }`}
-                    >
-                      {isSuper && <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />}
-                      <span>{u.displayName.split(",")[0]}</span>
-                      <span className="text-[10px] opacity-75">
-                        ({u.role === "superAdmin" ? "Super Admin" : u.role === "admin" ? "Admin" : "Guru"})
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           <button
             type="submit"

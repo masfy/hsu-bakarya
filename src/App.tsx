@@ -76,8 +76,14 @@ export default function App() {
   const [loggedInUserUid, setLoggedInUserUid] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("beranda");
 
-  const [works, setWorks] = useState<Work[]>(INITIAL_WORKS);
-  const [usersList, setUsersList] = useState<UserAccount[]>(CONTRIBUTORS);
+  const [works, setWorks] = useState<Work[]>(() => (isFirebaseConfigured ? [] : INITIAL_WORKS));
+  const [usersList, setUsersList] = useState<UserAccount[]>(() => {
+    if (isFirebaseConfigured) {
+      const superAdmin = CONTRIBUTORS.find((u) => u.role === "superAdmin");
+      return superAdmin ? [superAdmin] : [];
+    }
+    return CONTRIBUTORS;
+  });
   const [subjectsList, setSubjectsList] = useState<Subject[]>(INITIAL_SUBJECTS_DATA);
   const [categoriesList, setCategoriesList] = useState<Category[]>(INITIAL_CATEGORIES_DATA);
   const [mediaTypesList, setMediaTypesList] = useState<MediaType[]>(INITIAL_MEDIA_TYPES);
@@ -114,64 +120,76 @@ export default function App() {
   const [dailyStats, setDailyStats] = useState<DailyAnalytics[]>(INITIAL_DAILY_ANALYTICS);
   const [monthlyStats] = useState<MonthlyAnalytics[]>(INITIAL_MONTHLY_ANALYTICS);
   const [sessionId, setSessionId] = useState("");
-  const [moderationLogs, setModerationLogs] = useState<ModerationLog[]>([
-    {
-      id: "mod-log-1",
-      workId: "work-106",
-      workTitle: "Kamus Visual Bersuara Bahasa Banjar Hulu — Indonesia untuk PAUD",
-      actorName: "Admin Kurator Disdik HSU",
-      action: "revision_requested",
-      previousStatus: "pending_review",
-      newStatus: "revision_requested",
-      note: "Mohon ubah izin tautan Google Drive menjadi 'Siapa saja yang memiliki tautan (Anyone with the link)'.",
-      createdAt: "14 Okt 2026, 11:40 WITA",
-    },
-    {
-      id: "mod-log-2",
-      workId: "work-101",
-      workTitle: "Petualangan Matematika di Rawa Lebak Amuntai",
-      actorName: "Admin Kurator Disdik HSU",
-      action: "published",
-      previousStatus: "pending_review",
-      newStatus: "published",
-      note: "Karya memenuhi standar kurasi dan sangat kontekstual.",
-      createdAt: "11 Okt 2026, 14:20 WITA",
-    },
-  ]);
+  const [moderationLogs, setModerationLogs] = useState<ModerationLog[]>(() =>
+    isFirebaseConfigured
+      ? []
+      : [
+          {
+            id: "mod-log-1",
+            workId: "work-106",
+            workTitle: "Kamus Visual Bersuara Bahasa Banjar Hulu — Indonesia untuk PAUD",
+            actorName: "Admin Kurator Disdik HSU",
+            action: "revision_requested",
+            previousStatus: "pending_review",
+            newStatus: "revision_requested",
+            note: "Mohon ubah izin tautan Google Drive menjadi 'Siapa saja yang memiliki tautan (Anyone with the link)'.",
+            createdAt: "14 Okt 2026, 11:40 WITA",
+          },
+          {
+            id: "mod-log-2",
+            workId: "work-101",
+            workTitle: "Petualangan Matematika di Rawa Lebak Amuntai",
+            actorName: "Admin Kurator Disdik HSU",
+            action: "published",
+            previousStatus: "pending_review",
+            newStatus: "published",
+            note: "Karya memenuhi standar kurasi dan sangat kontekstual.",
+            createdAt: "11 Okt 2026, 14:20 WITA",
+          },
+        ]
+  );
 
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([
-    {
-      id: "aud-1",
-      actorName: "Super Admin BAKARYA",
-      action: "site_settings_updated",
-      targetType: "siteSettings/general",
-      summary: "Memperbarui zona waktu laporan ke Asia/Makassar (WITA)",
-      createdAt: "01 Okt 2026, 08:00 WITA",
-    },
-    {
-      id: "aud-2",
-      actorName: "Admin Kurator Disdik HSU",
-      action: "work_published",
-      targetType: "works/work-101",
-      summary: "Menerbitkan karya 'Petualangan Matematika di Rawa Lebak Amuntai'",
-      createdAt: "11 Okt 2026, 14:20 WITA",
-    },
-  ]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() =>
+    isFirebaseConfigured
+      ? []
+      : [
+          {
+            id: "aud-1",
+            actorName: "Super Admin BAKARYA",
+            action: "site_settings_updated",
+            targetType: "siteSettings/general",
+            summary: "Memperbarui zona waktu laporan ke Asia/Makassar (WITA)",
+            createdAt: "01 Okt 2026, 08:00 WITA",
+          },
+          {
+            id: "aud-2",
+            actorName: "Admin Kurator Disdik HSU",
+            action: "work_published",
+            targetType: "works/work-101",
+            summary: "Menerbitkan karya 'Petualangan Matematika di Rawa Lebak Amuntai'",
+            createdAt: "11 Okt 2026, 14:20 WITA",
+          },
+        ]
+  );
 
-  // Sync with Firestore if configured
-  useEffect(() => {
+  const handleRefreshDataFromFirestore = () => {
     if (isFirebaseConfigured) {
       fetchWorksFromFirestore().then((remoteWorks) => {
-        if (remoteWorks && remoteWorks.length > 0) {
+        if (remoteWorks !== null) {
           setWorks(remoteWorks);
         }
       });
       fetchUsersFromFirestore().then((remoteUsers) => {
-        if (remoteUsers && remoteUsers.length > 0) {
+        if (remoteUsers !== null && remoteUsers.length > 0) {
           setUsersList(remoteUsers);
         }
       });
     }
+  };
+
+  // Sync with Firestore if configured
+  useEffect(() => {
+    handleRefreshDataFromFirestore();
   }, []);
 
   // Set Session ID
@@ -766,7 +784,9 @@ export default function App() {
 
           {activeTab === "panduan" && <GuideView />}
 
-          {activeTab === "arsitektur" && role === "superAdmin" && <ArchitectureView />}
+          {activeTab === "arsitektur" && role === "superAdmin" && (
+            <ArchitectureView onRefreshData={handleRefreshDataFromFirestore} />
+          )}
         </AnimatePresence>
       </main>
 

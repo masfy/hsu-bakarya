@@ -18,7 +18,7 @@ export async function fetchUsersFromFirestore(): Promise<UserAccount[] | null> {
     snapshot.forEach((d) => {
       list.push({ uid: d.id, ...d.data() } as UserAccount);
     });
-    return list.length > 0 ? list : null;
+    return list;
   } catch (error) {
     console.warn("Gagal memuat pengguna dari Firestore:", error);
     return null;

@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { MapPin } from "lucide-react";
+import { MapPin, Users } from "lucide-react";
 import { UserAccount, Work } from "../types";
 import { getDriveDirectImageUrl } from "../utils/drive";
 
@@ -45,8 +45,23 @@ export function ContributorsView({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {activeContributors.map((contrib) => {
+      {activeContributors.length === 0 ? (
+        <div className="bg-white rounded-3xl p-10 sm:p-14 text-center border border-[#14213D]/10 shadow-sm max-w-xl mx-auto space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-[#167D78]/10 text-[#167D78] flex items-center justify-center mx-auto shadow-sm">
+            <Users className="w-8 h-8" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="font-display font-extrabold text-[#14213D] text-lg sm:text-xl">
+              Belum Ada Profil Publik Kontributor
+            </h3>
+            <p className="text-xs sm:text-sm text-[#727782] max-w-md mx-auto leading-relaxed">
+              Database dalam kondisi bersih. Profil pendidik dan guru kontributor yang mendaftar dan disetujui akan tampil secara otomatis di sini.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {activeContributors.map((contrib) => {
           const contribWorks = works.filter(
             (w) => w.contributorId === contrib.uid && w.status === "published" && !w.isDeleted
           );
@@ -115,6 +130,7 @@ export function ContributorsView({
           );
         })}
       </div>
+      )}
     </motion.div>
   );
 }

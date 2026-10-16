@@ -21,7 +21,11 @@ import { CodeBlockCard } from "../components/common/CodeBlockCard";
 import { isFirebaseConfigured } from "../services/firebase";
 import { seedFirestoreDatabase, SeedResult } from "../services/seedService";
 
-export function ArchitectureView() {
+interface ArchitectureViewProps {
+  onRefreshData?: () => void;
+}
+
+export function ArchitectureView({ onRefreshData }: ArchitectureViewProps) {
   const [isSeeding, setIsSeeding] = useState(false);
   const [seedResult, setSeedResult] = useState<SeedResult | null>(null);
 
@@ -41,6 +45,9 @@ export function ArchitectureView() {
     try {
       const res = await seedFirestoreDatabase(mode);
       setSeedResult(res);
+      if (res.success && onRefreshData) {
+        onRefreshData();
+      }
     } catch (e: any) {
       setSeedResult({
         success: false,

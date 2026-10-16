@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Work, UserAccount, UserRole } from "../types";
 import { StatusBadge } from "../components/common/StatusBadge";
+import { getDriveDirectImageUrl } from "../utils/drive";
 
 interface DashboardViewProps {
   role: UserRole;
@@ -67,9 +68,13 @@ export function DashboardView({
               title="Edit Profil & Foto"
             >
               <img
-                src={currentUserProfile.avatar}
+                src={getDriveDirectImageUrl(currentUserProfile.avatar, "w300") || currentUserProfile.avatar}
                 alt={currentUserProfile.displayName}
-                className="w-20 h-20 rounded-2xl object-cover border-2 border-[#F2B84B] shadow-md"
+                className="w-20 h-20 rounded-2xl object-cover border-2 border-[#F2B84B] shadow-md bg-white"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "https://placehold.co/150x150/14213D/F2B84B?text=Foto";
+                }}
               />
               <div className="absolute inset-0 rounded-2xl bg-[#14213D]/70 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                 <Camera className="w-6 h-6 text-[#F2B84B]" />

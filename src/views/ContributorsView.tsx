@@ -2,6 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { MapPin } from "lucide-react";
 import { UserAccount, Work } from "../types";
+import { getDriveDirectImageUrl } from "../utils/drive";
 
 interface ContributorsViewProps {
   usersList: UserAccount[];
@@ -60,9 +61,13 @@ export function ContributorsView({
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
                   <img
-                    src={contrib.avatar}
+                    src={getDriveDirectImageUrl(contrib.avatar, "w300") || contrib.avatar}
                     alt={contrib.displayName}
-                    className="w-16 h-16 rounded-2xl object-cover border-2 border-[#F2B84B] shadow-sm shrink-0"
+                    className="w-16 h-16 rounded-2xl object-cover border-2 border-[#F2B84B] shadow-sm shrink-0 bg-white"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "https://placehold.co/150x150/14213D/F2B84B?text=Guru";
+                    }}
                   />
                   <div>
                     <h3 className="font-display font-extrabold text-lg text-[#14213D]">

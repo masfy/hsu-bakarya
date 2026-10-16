@@ -12,6 +12,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { UserAccount, UserRole, AccountStatus, Work } from "../types";
+import { getDriveDirectImageUrl } from "../utils/drive";
 
 interface UsersViewProps {
   role: UserRole;
@@ -162,9 +163,13 @@ export function UsersView({
                 >
                   <div className="flex items-start gap-4">
                     <img
-                      src={userItem.avatar}
+                      src={getDriveDirectImageUrl(userItem.avatar, "w200") || userItem.avatar}
                       alt={userItem.displayName}
-                      className="w-14 h-14 rounded-2xl object-cover border-2 border-[#F2B84B] shadow-sm shrink-0"
+                      className="w-14 h-14 rounded-2xl object-cover border-2 border-[#F2B84B] shadow-sm shrink-0 bg-white"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = "https://placehold.co/150x150/14213D/F2B84B?text=User";
+                      }}
                     />
                     <div className="space-y-2">
                       <div className="flex flex-wrap items-center gap-2">

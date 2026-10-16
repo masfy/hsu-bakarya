@@ -109,15 +109,14 @@ service cloud.firestore {
   ]
 }`;
 
-  const envConfigSample = `# Variabel Lingkungan Firebase untuk BAKARYA
-# Dapatkan dari: Firebase Console -> Project Settings -> General -> Your Apps (Web App)
-VITE_FIREBASE_API_KEY="AIzaSyBxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-VITE_FIREBASE_AUTH_DOMAIN="bakarya-gugus2.firebaseapp.com"
-VITE_FIREBASE_PROJECT_ID="bakarya-gugus2"
-VITE_FIREBASE_STORAGE_BUCKET="bakarya-gugus2.appspot.com"
-VITE_FIREBASE_MESSAGING_SENDER_ID="123456789012"
-VITE_FIREBASE_APP_ID="1:123456789012:web:abcdef123456"
-VITE_FIREBASE_MEASUREMENT_ID="G-XXXXXXXXXX"`;
+  const envConfigSample = `# Variabel Lingkungan Firebase Resmi BAKARYA (bakarya-8152e)
+VITE_FIREBASE_API_KEY="AIzaSyCnpCeMkPku8rejjbG2yczqvhMXRptLukU"
+VITE_FIREBASE_AUTH_DOMAIN="bakarya-8152e.firebaseapp.com"
+VITE_FIREBASE_PROJECT_ID="bakarya-8152e"
+VITE_FIREBASE_STORAGE_BUCKET="bakarya-8152e.firebasestorage.app"
+VITE_FIREBASE_MESSAGING_SENDER_ID="203212618767"
+VITE_FIREBASE_APP_ID="1:203212618767:web:875d77b46653b35a30377a"
+VITE_FIREBASE_MEASUREMENT_ID="G-BFMPP06K77"`;
 
   const deployGuideCode = `# 1. Install Firebase CLI secara global
 npm install -g firebase-tools

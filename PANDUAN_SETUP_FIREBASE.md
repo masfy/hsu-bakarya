@@ -113,11 +113,18 @@ firebase deploy --only firestore:rules,firestore:indexes
 
 ---
 
-### Langkah 2.5: Aktifkan Firebase Storage (Untuk Foto Profil & Dokumen)
+### Langkah 2.5: Firebase Storage (OPSIONAL — Tidak Wajib Diaktifkan!)
+> **Kabar Baik**: Anda **TIDAK HARUS** mengaktifkan Firebase Storage!  
+> Portal BAKARYA dirancang fleksibel dan hemat biaya kuota. Untuk foto profil guru maupun tautan karya, sistem mendukung penuh:
+> 1. **Tautan Google Drive Langsung**: Cukup salin link file foto/karya dari Google Drive, sistem otomatis mengubahnya menjadi thumbnail gambar direct!
+> 2. **Tautan URL Web**: Tautan gambar dari mana saja di internet.
+> 3. **Avatar Pilihan Pendidik**: Koleksi avatar karakter guru yang siap pakai.
+> 4. **Kompresi Otomatis Client-Side**: Jika guru memilih file foto dari HP/laptop, browser otomatis mengompresi ukurannya menjadi mini (~15-25 KB) dan menyimpannya langsung ke Firestore tanpa membutuhkan Firebase Storage.
+
+*Jika Anda tetap ingin mengaktifkannya (opsional):*
 1. Pada menu navigasi sebelah kiri, klik **Build** > **Storage**.
-2. Klik tombol **Get Started**.
-3. Pilih lokasi: **`asia-southeast2 (Jakarta)`**.
-4. Di tab **Rules**, pastikan aturan mengizinkan upload oleh pengguna terdaftar:
+2. Klik tombol **Get Started** $\rightarrow$ pilih lokasi: **`asia-southeast2 (Jakarta)`**.
+3. Di tab **Rules**, pastikan aturan mengizinkan upload oleh pengguna terdaftar:
 ```javascript
 rules_version = '2';
 service firebase.storage {
@@ -129,7 +136,7 @@ service firebase.storage {
   }
 }
 ```
-5. Klik **Publish**.
+4. Klik **Publish**.
 
 ---
 
@@ -139,16 +146,16 @@ service firebase.storage {
 3. Klik ikon Web (`</>`).
 4. Masukkan nama aplikasi: `BAKARYA Web`.
 5. Klik **Register app**.
-6. Anda akan melihat objek konfigurasi JavaScript seperti:
+6. Konfigurasi proyek Anda (`bakarya-8152e`):
 ```javascript
 const firebaseConfig = {
-  apiKey: "AIzaSyBxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-  authDomain: "bakarya-gugus2.firebaseapp.com",
-  projectId: "bakarya-gugus2",
-  storageBucket: "bakarya-gugus2.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:abcdef123456",
-  measurementId: "G-XXXXXXXXXX"
+  apiKey: "AIzaSyCnpCeMkPku8rejjbG2yczqvhMXRptLukU",
+  authDomain: "bakarya-8152e.firebaseapp.com",
+  projectId: "bakarya-8152e",
+  storageBucket: "bakarya-8152e.firebasestorage.app",
+  messagingSenderId: "203212618767",
+  appId: "1:203212618767:web:875d77b46653b35a30377a",
+  measurementId: "G-BFMPP06K77"
 };
 ```
 
@@ -156,19 +163,19 @@ const firebaseConfig = {
 
 ## 💻 3. Konfigurasi File Lingkungan `.env.local`
 
-Buat file baru bernama `.env.local` di folder root proyek `BAKARYA` (sejajar dengan `package.json`). Isi dengan nilai yang Anda peroleh dari Langkah 2.6:
+File `.env.local` di folder root proyek `BAKARYA` telah diisi dengan konfigurasi Firebase resmi proyek Anda:
 
 ```env
-VITE_FIREBASE_API_KEY="AIzaSyBxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-VITE_FIREBASE_AUTH_DOMAIN="bakarya-gugus2.firebaseapp.com"
-VITE_FIREBASE_PROJECT_ID="bakarya-gugus2"
-VITE_FIREBASE_STORAGE_BUCKET="bakarya-gugus2.appspot.com"
-VITE_FIREBASE_MESSAGING_SENDER_ID="123456789012"
-VITE_FIREBASE_APP_ID="1:123456789012:web:abcdef123456"
-VITE_FIREBASE_MEASUREMENT_ID="G-XXXXXXXXXX"
+VITE_FIREBASE_API_KEY="AIzaSyCnpCeMkPku8rejjbG2yczqvhMXRptLukU"
+VITE_FIREBASE_AUTH_DOMAIN="bakarya-8152e.firebaseapp.com"
+VITE_FIREBASE_PROJECT_ID="bakarya-8152e"
+VITE_FIREBASE_STORAGE_BUCKET="bakarya-8152e.firebasestorage.app"
+VITE_FIREBASE_MESSAGING_SENDER_ID="203212618767"
+VITE_FIREBASE_APP_ID="1:203212618767:web:875d77b46653b35a30377a"
+VITE_FIREBASE_MEASUREMENT_ID="G-BFMPP06K77"
 ```
 
-> **Catatan Keamanan**: File `.env.local` sudah masuk ke dalam `.gitignore` sehingga tidak akan bocor ke publik saat di-push ke GitHub.
+> **Catatan Keamanan**: File `.env.local` sudah masuk ke dalam `.gitignore` sehingga tidak akan bocor ke publik saat di-push ke GitHub. Variabel ini juga yang akan Anda masukkan saat deploy di Vercel nanti.
 
 ---
 

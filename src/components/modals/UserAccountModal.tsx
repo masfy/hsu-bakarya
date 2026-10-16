@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { X } from "lucide-react";
+import { X, Link as LinkIcon, AlertTriangle } from "lucide-react";
 import { UserAccount, UserRole, AccountStatus } from "../../types";
+import { PRESET_AVATARS } from "../../data/initialData";
+import { getDriveDirectImageUrl } from "../../utils/drive";
 
 interface UserAccountModalProps {
   initialData: UserAccount | null;
@@ -21,6 +23,7 @@ export function UserAccountModal({
   const [username, setUsername] = useState(initialData?.username || "");
   const [tempPassword, setTempPassword] = useState(initialData?.tempPassword || "Bakarya#2026");
   const [institution, setInstitution] = useState(initialData?.institution || "");
+  const [avatar, setAvatar] = useState(initialData?.avatar || PRESET_AVATARS[0]);
   const [userRole, setUserRole] = useState<UserRole>(initialData?.role || "contributor");
   const [accountStatus, setAccountStatus] = useState<AccountStatus>(
     initialData?.accountStatus || "active"
@@ -39,10 +42,13 @@ export function UserAccountModal({
       username,
       tempPassword,
       institution,
+      avatar: getDriveDirectImageUrl(avatar, "w400") || avatar,
       role: userRole,
       accountStatus,
     });
   };
+
+  const displayAvatar = getDriveDirectImageUrl(avatar, "w400");
 
   return (
     <motion.div
@@ -63,7 +69,7 @@ export function UserAccountModal({
               Manajemen Akun
             </span>
             <h2 className="font-display text-xl font-extrabold text-[#14213D]">
-              {initialData ? "Edit Akun & Hak Akses" : "Tambah Akun Peserta"}
+              {initialData ? "Edit Akun Pengguna" : "Tambah Pengguna Baru"}
             </h2>
           </div>
           <button
@@ -76,35 +82,84 @@ export function UserAccountModal({
         </div>
 
         {error && (
-          <div className="p-3 rounded-xl bg-rose-50 text-rose-800 text-xs font-bold border border-rose-200">
-            {error}
+          <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold uppercase mb-1 text-[#14213D]">
-                Nama Lengkap & Gelar *
-              </label>
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs outline-none focus:border-[#167D78]"
+          {/* Bagian Foto Profil / Avatar */}
+          <div className="bg-[#F8F7F2] p-4 rounded-2xl border border-[#14213D]/10 space-y-3">
+            <div className="flex items-center gap-4">
+              <img
+                src={displayAvatar}
+                alt="Avatar"
+                className="w-16 h-16 rounded-2xl object-cover border-2 border-[#F2B84B] shadow-sm shrink-0 bg-white"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src =
+                    "https://placehold.co/150x150/14213D/F2B84B?text=User";
+                }}
               />
+              <div className="space-y-1.5 flex-1">
+                <label className="block text-xs font-bold uppercase text-[#14213D]">
+                  Link Foto Profil (Google Drive / Web)
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={avatar}
+                    onChange={(e) => setAvatar(e.target.value)}
+                    placeholder="https://drive.google.com/file/d/... atau https://..."
+                    className="w-full pl-8 pr-3.5 py-2 rounded-xl bg-white border border-[#14213D]/15 text-xs font-mono outline-none focus:border-[#167D78]"
+                  />
+                  <LinkIcon className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold uppercase mb-1 text-[#14213D]">
-                Asal Instansi *
-              </label>
-              <input
-                type="text"
-                value={institution}
-                onChange={(e) => setInstitution(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs outline-none focus:border-[#167D78]"
-              />
+
+            <div className="flex items-center gap-2 pt-1">
+              <span className="text-[10px] font-bold text-[#727782]">Avatar Cepat:</span>
+              <div className="flex items-center gap-1.5">
+                {PRESET_AVATARS.map((url, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setAvatar(url)}
+                    className={`w-7 h-7 rounded-lg overflow-hidden border transition-transform ${
+                      avatar === url ? "border-[#167D78] scale-110 shadow-sm" : "border-transparent opacity-75"
+                    }`}
+                  >
+                    <img src={url} alt={`preset-${idx}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase mb-1 text-[#14213D]">
+              Nama Lengkap & Gelar *
+            </label>
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              className="w-full px-3.5 py-2 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs outline-none focus:border-[#167D78]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase mb-1 text-[#14213D]">
+              Asal Sekolah / Instansi *
+            </label>
+            <input
+              type="text"
+              value={institution}
+              onChange={(e) => setInstitution(e.target.value)}
+              className="w-full px-3.5 py-2 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs outline-none focus:border-[#167D78]"
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -187,7 +242,7 @@ export function UserAccountModal({
               type="submit"
               className="px-5 py-2 rounded-xl bg-[#167D78] hover:bg-[#14213D] transition-colors text-white text-xs font-bold shadow-md"
             >
-              Simpan Akun
+              Simpan Pengguna
             </button>
           </div>
         </form>

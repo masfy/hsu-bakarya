@@ -9,7 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { UserRole, UserAccount } from "../../types";
-import { BAKARYA_LOGO_URL } from "../../utils/drive";
+import { BAKARYA_LOGO_URL, getDriveDirectImageUrl } from "../../utils/drive";
 
 interface NavbarProps {
   activeTab: string;
@@ -166,9 +166,13 @@ export function Navbar({
                   title="Profil Saya"
                 >
                   <img
-                    src={currentUserProfile.avatar}
+                    src={getDriveDirectImageUrl(currentUserProfile.avatar, "w100") || currentUserProfile.avatar}
                     alt={currentUserProfile.displayName}
-                    className="w-6 h-6 rounded-lg object-cover border border-[#F2B84B]"
+                    className="w-6 h-6 rounded-lg object-cover border border-[#F2B84B] bg-white"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "https://placehold.co/100x100/14213D/F2B84B?text=U";
+                    }}
                   />
                   <span className="hidden md:inline max-w-[110px] truncate">
                     {currentUserProfile.displayName.split(",")[0]}

@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { X, Upload, AlertTriangle } from "lucide-react";
+import { X, Upload, Link as LinkIcon, Sparkles, AlertTriangle, Check } from "lucide-react";
 import { UserAccount } from "../../types";
 import { PRESET_AVATARS } from "../../data/initialData";
+import { getDriveDirectImageUrl } from "../../utils/drive";
 
 interface SelfProfileModalProps {
   user: UserAccount;
@@ -10,43 +11,88 @@ interface SelfProfileModalProps {
   onSave: (data: Partial<UserAccount>) => void;
 }
 
+/**
+ * Kompresi gambar client-side menggunakan HTML5 Canvas
+ * Menghasilkan avatar 160x160 piksel format JPEG ~15-25 KB
+ * Aman disimpan langsung di Firestore tanpa butuh Firebase Storage!
+ */
+function compressImageFile(file: File, maxSize: number = 160, quality: number = 0.82): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let { width, height } = img;
+        if (width > height) {
+          if (width > maxSize) {
+            height = Math.round((height * maxSize) / width);
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = Math.round((width * maxSize) / height);
+            height = maxSize;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(e.target?.result as string);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = reject;
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export function SelfProfileModal({ user, onClose, onSave }: SelfProfileModalProps) {
   const [displayName, setDisplayName] = useState(user.displayName || "");
   const [institution, setInstitution] = useState(user.institution || "");
   const [bio, setBio] = useState(user.bio || "");
   const [avatar, setAvatar] = useState(user.avatar || PRESET_AVATARS[0]);
+  const [photoTab, setPhotoTab] = useState<"link" | "preset" | "upload">("link");
+  const [linkInput, setLinkInput] = useState(
+    user.avatar && !user.avatar.startsWith("data:") ? user.avatar : ""
+  );
   const [uploadedFileName, setUploadedFileName] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLinkChange = (url: string) => {
+    setLinkInput(url);
+    setErrorMsg(null);
+    if (!url.trim()) return;
+    const resolved = getDriveDirectImageUrl(url.trim(), "w400");
+    setAvatar(resolved);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setErrorMsg(null);
-    const maxSizeBytes = 1024 * 1024; // 1 MB
     if (!file.type.startsWith("image/")) {
       setErrorMsg("Format file harus berupa gambar (JPG, PNG, atau WEBP).");
       e.target.value = "";
       return;
     }
-    if (file.size > maxSizeBytes) {
-      const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
-      setErrorMsg(
-        `Ukuran foto (${sizeInMB} MB) melebihi batas maksimal 1 MB. Silakan pilih foto yang lebih kecil.`
-      );
-      e.target.value = "";
-      return;
-    }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        setAvatar(event.target.result as string);
-        setUploadedFileName(`${file.name} (${(file.size / 1024).toFixed(0)} KB)`);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      // Kompresi otomatis ke resolusi avatar mini
+      const compressedDataUrl = await compressImageFile(file, 160, 0.82);
+      setAvatar(compressedDataUrl);
+      setUploadedFileName(`${file.name} (Terkonversi mini ~${Math.round(compressedDataUrl.length / 1024)} KB)`);
+    } catch {
+      setErrorMsg("Gagal memproses gambar. Silakan gunakan link URL atau avatar pilihan.");
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -63,10 +109,12 @@ export function SelfProfileModal({ user, onClose, onSave }: SelfProfileModalProp
       displayName,
       institution,
       bio,
-      avatar,
+      avatar: getDriveDirectImageUrl(avatar, "w400"),
       ...(newPassword ? { tempPassword: newPassword } : {}),
     });
   };
+
+  const displayAvatar = getDriveDirectImageUrl(avatar, "w400");
 
   return (
     <motion.div
@@ -87,7 +135,7 @@ export function SelfProfileModal({ user, onClose, onSave }: SelfProfileModalProp
               Profil Saya
             </span>
             <h2 className="font-display text-xl font-extrabold text-[#14213D]">
-              Edit Profil, Upload Foto & Password
+              Edit Profil & Foto Pendidik
             </h2>
           </div>
           <button
@@ -107,21 +155,141 @@ export function SelfProfileModal({ user, onClose, onSave }: SelfProfileModalProp
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="bg-[#F8F7F2] p-4 rounded-2xl border border-[#14213D]/10 space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              <img
-                src={avatar}
-                alt="Avatar"
-                className="w-20 h-20 rounded-2xl object-cover border-2 border-[#F2B84B] shrink-0"
-              />
-              <div className="space-y-2 flex-1">
-                <label className="block text-xs font-extrabold uppercase text-[#14213D]">
-                  Upload Foto Profil Sendiri (Maks. 1 MB)
+          {/* Card Pengaturan Foto Profil Fleksibel Tanpa Membutuhkan Firebase Storage */}
+          <div className="bg-[#F8F7F2] p-4 sm:p-5 rounded-2xl border border-[#14213D]/10 space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-[#F2B84B] shadow-md shrink-0 bg-white flex items-center justify-center">
+                <img
+                  src={displayAvatar}
+                  alt="Avatar"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src =
+                      "https://placehold.co/150x150/14213D/F2B84B?text=Foto";
+                  }}
+                />
+              </div>
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#167D78]">
+                  Foto Profil Pengguna
+                </span>
+                <h3 className="font-display font-extrabold text-sm text-[#14213D]">
+                  Pilih Metode Foto (Tanpa Firebase Storage)
+                </h3>
+                <p className="text-[11px] text-[#727782] mt-0.5 leading-relaxed">
+                  Gunakan link Google Drive, avatar ilustrasi, atau kompresi otomatis langsung ke Firestore.
+                </p>
+              </div>
+            </div>
+
+            {/* Switcher Tab Metode Foto */}
+            <div className="grid grid-cols-3 gap-1.5 bg-white p-1 rounded-xl border border-[#14213D]/10">
+              <button
+                type="button"
+                onClick={() => setPhotoTab("link")}
+                className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  photoTab === "link"
+                    ? "bg-[#14213D] text-white shadow-sm"
+                    : "text-[#727782] hover:text-[#14213D]"
+                }`}
+              >
+                <LinkIcon className="w-3.5 h-3.5" />
+                <span>Link / Drive</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPhotoTab("preset")}
+                className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  photoTab === "preset"
+                    ? "bg-[#14213D] text-white shadow-sm"
+                    : "text-[#727782] hover:text-[#14213D]"
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-[#F2B84B]" />
+                <span>Avatar Guru</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPhotoTab("upload")}
+                className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  photoTab === "upload"
+                    ? "bg-[#14213D] text-white shadow-sm"
+                    : "text-[#727782] hover:text-[#14213D]"
+                }`}
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span>File HP/PC</span>
+              </button>
+            </div>
+
+            {/* Konten Tab 1: Link URL / Google Drive */}
+            {photoTab === "link" && (
+              <div className="space-y-2 pt-1">
+                <label className="block text-xs font-bold text-[#14213D]">
+                  Tempel Link Google Drive / URL Foto Web:
+                </label>
+                <input
+                  type="text"
+                  value={linkInput}
+                  onChange={(e) => handleLinkChange(e.target.value)}
+                  placeholder="Contoh: https://drive.google.com/file/d/... atau https://..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#14213D]/15 text-xs font-mono outline-none focus:border-[#167D78]"
+                />
+                <p className="text-[11px] text-[#727782] leading-relaxed bg-amber-50 p-2.5 rounded-xl border border-amber-200/60 text-amber-900">
+                  💡 <strong>Tip Google Drive:</strong> Klik kanan foto di Google Drive &gt; <em>Bagikan (Share)</em> &gt; ubah akses ke <strong>"Siapa saja yang memiliki link"</strong> &gt; salin link ke sini. Sistem otomatis mengubahnya menjadi foto profil!
+                </p>
+              </div>
+            )}
+
+            {/* Konten Tab 2: Avatar Pendidik Siap Pakai */}
+            {photoTab === "preset" && (
+              <div className="space-y-2 pt-1">
+                <label className="block text-xs font-bold text-[#14213D]">
+                  Klik untuk Memilih Avatar Karakter Guru:
+                </label>
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {PRESET_AVATARS.map((url, idx) => {
+                    const isSelected = avatar === url;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setAvatar(url);
+                          setLinkInput(url);
+                          setUploadedFileName("");
+                          setErrorMsg(null);
+                        }}
+                        className={`relative w-11 h-11 rounded-xl overflow-hidden border-2 transition-all ${
+                          isSelected
+                            ? "border-[#167D78] scale-110 shadow-md ring-2 ring-[#167D78]/30"
+                            : "border-transparent opacity-75 hover:opacity-100 hover:scale-105"
+                        }`}
+                      >
+                        <img src={url} alt={`preset-${idx}`} className="w-full h-full object-cover" />
+                        {isSelected && (
+                          <div className="absolute inset-0 bg-[#167D78]/25 flex items-center justify-center">
+                            <Check className="w-4 h-4 text-white drop-shadow" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Konten Tab 3: Upload File HP / PC (Kompresi Otomatis) */}
+            {photoTab === "upload" && (
+              <div className="space-y-2 pt-1">
+                <label className="block text-xs font-bold text-[#14213D]">
+                  Pilih Foto dari Galeri HP atau Laptop:
                 </label>
                 <div className="flex flex-wrap items-center gap-2">
-                  <label className="cursor-pointer px-3.5 py-2 rounded-xl bg-[#14213D] hover:bg-[#167D78] text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors">
-                    <Upload className="w-3.5 h-3.5 text-[#F2B84B]" />
-                    <span>Pilih Foto dari Perangkat</span>
+                  <label className="cursor-pointer px-4 py-2.5 rounded-xl bg-[#14213D] hover:bg-[#167D78] text-white text-xs font-bold inline-flex items-center gap-2 transition-colors shadow-sm">
+                    <Upload className="w-4 h-4 text-[#F2B84B]" />
+                    <span>Pilih Berkas Foto</span>
                     <input
                       type="file"
                       accept="image/png,image/jpeg,image/webp"
@@ -130,38 +298,22 @@ export function SelfProfileModal({ user, onClose, onSave }: SelfProfileModalProp
                     />
                   </label>
                   {uploadedFileName && (
-                    <span className="text-[11px] font-bold text-[#167D78] bg-[#167D78]/10 px-2.5 py-1 rounded-lg">
+                    <span className="text-[11px] font-bold text-[#167D78] bg-[#167D78]/10 px-3 py-1.5 rounded-xl">
                       ✓ {uploadedFileName}
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-[#727782]">
-                  Mendukung JPG, PNG, atau WEBP (maks. 1 MB). Atau pilih avatar preset:
+                <p className="text-[11px] text-[#727782] leading-relaxed">
+                  Foto akan otomatis di-compress menjadi ukuran mini (~15-25 KB) oleh browser sehingga tersimpan langsung ke database tanpa memerlukan Firebase Storage.
                 </p>
-                <div className="flex items-center gap-2 pt-0.5">
-                  {PRESET_AVATARS.map((url, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setAvatar(url);
-                        setUploadedFileName("");
-                        setErrorMsg(null);
-                      }}
-                      className={`w-7 h-7 rounded-lg overflow-hidden border-2 transition-transform ${
-                        avatar === url ? "border-[#167D78] scale-110" : "border-transparent"
-                      }`}
-                    >
-                      <img src={url} alt="preset" className="w-full h-full object-cover" />
-                    </button>
-                  ))}
-                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase mb-1 text-[#14213D]">Nama Lengkap & Gelar *</label>
+            <label className="block text-xs font-bold uppercase mb-1 text-[#14213D]">
+              Nama Lengkap & Gelar *
+            </label>
             <input
               type="text"
               value={displayName}
@@ -171,7 +323,9 @@ export function SelfProfileModal({ user, onClose, onSave }: SelfProfileModalProp
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase mb-1 text-[#14213D]">Asal Sekolah / Instansi *</label>
+            <label className="block text-xs font-bold uppercase mb-1 text-[#14213D]">
+              Asal Sekolah / Instansi *
+            </label>
             <input
               type="text"
               value={institution}
@@ -181,7 +335,9 @@ export function SelfProfileModal({ user, onClose, onSave }: SelfProfileModalProp
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase mb-1 text-[#14213D]">Bio Singkat</label>
+            <label className="block text-xs font-bold uppercase mb-1 text-[#14213D]">
+              Bio Singkat
+            </label>
             <textarea
               rows={2}
               value={bio}

@@ -239,6 +239,29 @@ firebase deploy --only firestore:rules,firestore:indexes`;
           </div>
         )}
 
+        {seedResult?.isPermissionError && (
+          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs space-y-2">
+            <div className="font-extrabold flex items-center gap-2 text-sm text-amber-950">
+              <Key className="w-4 h-4 text-amber-700" />
+              <span>Panduan Mengatasi "Missing or insufficient permissions":</span>
+            </div>
+            <ol className="list-decimal list-inside space-y-1.5 pl-1 text-[11px] leading-relaxed text-amber-950">
+              <li>
+                Buka <strong>Firebase Console</strong> &gt; <strong>Firestore Database</strong> &gt; tab <strong>Rules</strong>.
+              </li>
+              <li>
+                Ubah aturan sementara menjadi: <code className="bg-amber-100 px-1.5 py-0.5 rounded font-bold text-amber-900">allow read, write: if true;</code> lalu klik <strong>Publish</strong>.
+              </li>
+              <li>
+                Kembali ke halaman ini dan klik tombol <strong>"Inisialisasi Bersih"</strong> di bawah. Database akan langsung terisi!
+              </li>
+              <li>
+                Setelah berhasil, salin isi <strong>firestore.rules</strong> yang tersedia di bawah halaman ini ke tab Rules Firebase Anda.
+              </li>
+            </ol>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
           {/* Tombol Clean Slate (Tanpa Mock Data) */}
           <div className="p-5 rounded-2xl bg-[#F8F7F2] border border-[#14213D]/10 flex flex-col justify-between space-y-4 hover:border-[#167D78]/40 transition-all">

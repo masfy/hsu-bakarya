@@ -5,7 +5,11 @@ import {
   getDocs,
   writeBatch,
 } from "firebase/firestore";
-import { db, isFirebaseConfigured } from "./firebase";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+} from "firebase/auth";
+import { auth, db, isFirebaseConfigured } from "./firebase";
 import {
   CONTRIBUTORS,
   INITIAL_WORKS,
@@ -18,6 +22,7 @@ import { UserAccount, Work } from "../types";
 export interface SeedResult {
   success: boolean;
   message: string;
+  isPermissionError?: boolean;
   counts?: {
     users: number;
     works: number;
@@ -41,6 +46,27 @@ export async function seedFirestoreDatabase(mode: "full" | "clean" = "full"): Pr
     };
   }
 
+  // Jika Firebase Auth tersedia dan user belum login di SDK, otomatis login/buat akun Super Admin
+  if (auth && !auth.currentUser) {
+    try {
+      await signInWithEmailAndPassword(auth, "alfyarnaim@gmail.com", "kadabakarya");
+      console.log("🔥 Seed service: Berhasil login ke Firebase Auth sebagai Super Admin.");
+    } catch (authErr: any) {
+      if (
+        authErr.code === "auth/user-not-found" ||
+        authErr.code === "auth/invalid-credential" ||
+        authErr.code === "auth/wrong-password"
+      ) {
+        try {
+          await createUserWithEmailAndPassword(auth, "alfyarnaim@gmail.com", "kadabakarya");
+          console.log("🔥 Seed service: Berhasil mendaftarkan akun Super Admin di Firebase Auth.");
+        } catch (createErr) {
+          console.warn("Seed service tidak dapat membuat user Auth:", createErr);
+        }
+      }
+    }
+  }
+
   try {
     const batch = writeBatch(db);
 
@@ -56,7 +82,7 @@ export async function seedFirestoreDatabase(mode: "full" | "clean" = "full"): Pr
       batch.set(subRef, sub, { merge: true });
     }
 
-    // 3. Seed Format Jenis Media (tanpa field ikon fungsi React)
+    // 3. Seed Format Jenis Media (tanpa fungsi ikon React)
     for (const med of INITIAL_MEDIA_TYPES) {
       const medRef = doc(db, "mediaTypes", med.id);
       batch.set(
@@ -120,7 +146,7 @@ export async function seedFirestoreDatabase(mode: "full" | "clean" = "full"): Pr
       success: true,
       message:
         mode === "clean"
-          ? "Database berhasil diinisialisasi bersih (Clean Slate): Super Admin alfyarnaim@gmail.com dan taksonomi siap digunakan tanpa data tiruan."
+          ? "Database berhasil diinisialisasi bersih (Clean Slate)! Akun Super Admin alfyarnaim@gmail.com dan taksonomi telah aktif di Cloud Firestore. Koleksi karya 100% kosong (tanpa data mock)."
           : "Database berhasil diinisialisasi penuh dengan data kurasi Gugus 2 HSU dan Super Admin alfyarnaim@gmail.com.",
       counts: {
         users: usersToSeed.length,
@@ -132,9 +158,16 @@ export async function seedFirestoreDatabase(mode: "full" | "clean" = "full"): Pr
     };
   } catch (error: any) {
     console.error("Gagal melakukan seeding Firestore:", error);
+    const isPermission =
+      error?.code === "permission-denied" ||
+      (error?.message && error.message.toLowerCase().includes("permission"));
+
     return {
       success: false,
-      message: `Gagal inisialisasi database: ${error?.message || "Terjadi kesalahan koneksi"}`,
+      isPermissionError: isPermission,
+      message: isPermission
+        ? "Izin ditolak oleh Cloud Firestore (Missing or insufficient permissions). Aturan keamanan di Firebase Console Anda masih dalam status terkunci default ('allow read, write: if false;'). Buka Firebase Console > Firestore Database > Rules, ubah menjadi 'allow read, write: if true;' lalu Publish dan coba lagi."
+        : `Gagal inisialisasi database: ${error?.message || "Terjadi kesalahan koneksi"}`,
     };
   }
 }

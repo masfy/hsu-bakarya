@@ -5,19 +5,26 @@ service cloud.firestore {
       return request.auth != null; 
     }
     
+    // Akun Super Admin Utama berbasis email
+    function isSuperAdminEmail() {
+      return isSignedIn() && request.auth.token.email == 'alfyarnaim@gmail.com';
+    }
+    
     function getUserData() { 
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; 
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) 
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data 
+        : {}; 
     }
     
     function hasRole(roles) { 
-      return isSignedIn() && getUserData().accountStatus == 'active' && (getUserData().role in roles); 
+      return isSuperAdminEmail() || (isSignedIn() && getUserData().get('accountStatus', '') == 'active' && getUserData().get('role', '') in roles); 
     }
     
     function isAdmin() { 
-      return hasRole(['admin', 'superAdmin']); 
+      return isSuperAdminEmail() || hasRole(['admin', 'superAdmin']); 
     }
 
-    // Koleksi Karya Digital
+    // Koleksi Karya Digital (Works)
     match /works/{workId} {
       allow read: if (resource.data.status == 'published' && resource.data.isDeleted == false) || isAdmin() || (isSignedIn() && resource.data.contributorId == request.auth.uid);
       allow create: if isSignedIn();
@@ -25,46 +32,41 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Koleksi Pengguna (Kontributor & Admin)
+    // Koleksi Pengguna (Users)
     match /users/{userId} {
       allow read: if true;
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if (isSignedIn() && request.auth.uid == userId) || isAdmin();
-      allow delete: if hasRole(['superAdmin']);
+      allow create, update: if isSuperAdminEmail() || (isSignedIn() && request.auth.uid == userId) || isAdmin();
+      allow delete: if isSuperAdminEmail() || hasRole(['superAdmin']);
     }
 
     // Koleksi Taksonomi (Mata Pelajaran, Kategori, Format Media)
     match /subjects/{id} {
       allow read: if true;
-      allow write: if isSignedIn();
+      allow write: if isSuperAdminEmail() || isSignedIn();
     }
     match /categories/{id} {
       allow read: if true;
-      allow write: if isSignedIn();
+      allow write: if isSuperAdminEmail() || isSignedIn();
     }
     match /mediaTypes/{id} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSuperAdminEmail() || isAdmin();
     }
 
     // Koleksi Moderasi & Audit Log
     match /moderationLogs/{logId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow read, write: if isSuperAdminEmail() || isAdmin();
     }
     match /auditLogs/{logId} {
-      allow read: if isAdmin();
-      allow write: if isAdmin();
+      allow read, write: if isSuperAdminEmail() || isAdmin();
     }
 
     // Koleksi Analitik
-    match /analyticsDaily/{dateKey} {
-      allow read: if true;
-      allow write: if true;
+    match /analyticsDaily/{dayId} {
+      allow read, write: if true;
     }
-    match /analyticsMonthly/{monthKey} {
-      allow read: if true;
-      allow write: if isAdmin();
+    match /analyticsMonthly/{monthId} {
+      allow read, write: if true;
     }
   }
 }

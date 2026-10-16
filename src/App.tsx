@@ -32,7 +32,8 @@ import {
   BAKARYA_FAVICON_URL,
   BAKARYA_DEFAULT_THUMBNAIL_URL,
 } from "./utils/drive";
-import { isFirebaseConfigured } from "./services/firebase";
+import { auth, isFirebaseConfigured } from "./services/firebase";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import {
   fetchWorksFromFirestore,
   saveWorkToFirestore,
@@ -287,7 +288,7 @@ export default function App() {
     return newId;
   };
 
-  const handleGoogleLoginOrRegister = (payload: {
+  const handleGoogleLoginOrRegister = async (payload: {
     mode: "login" | "register";
     email: string;
     password?: string;
@@ -328,6 +329,26 @@ export default function App() {
       if (existing.accountStatus !== "active") {
         triggerToast("Akses akun ini sedang dibekukan oleh Admin.", "error");
         return;
+      }
+
+      // Otentikasi sesi live ke Firebase Auth jika aktif
+      if (isFirebaseConfigured && auth && payload.password) {
+        try {
+          await signInWithEmailAndPassword(auth, normalizedEmail, payload.password);
+          console.log("🔥 Berhasil masuk ke sesi Firebase Auth:", normalizedEmail);
+        } catch (authErr: any) {
+          if (
+            authErr.code === "auth/user-not-found" ||
+            authErr.code === "auth/invalid-credential"
+          ) {
+            try {
+              await createUserWithEmailAndPassword(auth, normalizedEmail, payload.password);
+              console.log("🔥 Berhasil membuat sesi Firebase Auth baru:", normalizedEmail);
+            } catch (createErr) {
+              console.warn("Gagal auto-create Firebase Auth:", createErr);
+            }
+          }
+        }
       }
 
       setUsersList((prev) =>

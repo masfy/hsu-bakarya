@@ -39,7 +39,13 @@ export function WorkDetailModal({
         exit={{ scale: 0.95, y: 20 }}
         className="bg-white rounded-3xl max-w-3xl w-full overflow-hidden shadow-2xl border border-[#14213D]/10 my-8"
       >
-        <div className="relative h-60 sm:h-72 bg-[#14213D] flex items-center justify-center p-2">
+        <div
+          className={`relative h-60 sm:h-72 flex items-center justify-center p-3 ${
+            isDefaultBanner
+              ? "bg-gradient-to-b from-white to-slate-50 border-b border-slate-100"
+              : "bg-[#14213D]"
+          }`}
+        >
           <img
             src={displayThumb}
             alt={work.title}

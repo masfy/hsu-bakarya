@@ -290,11 +290,12 @@ export default function App() {
   const handleGoogleLoginOrRegister = (payload: {
     mode: "login" | "register";
     email: string;
+    password?: string;
     displayName: string;
     institution: string;
     district: string;
   }) => {
-    const nowWITA = "16 Okt 2026, 10:05 WITA";
+    const nowWITA = "16 Okt 2026, 22:00 WITA";
     const normalizedEmail = payload.email.trim().toLowerCase();
     const existing = usersList.find(
       (u) => !u.isDeleted && u.email.toLowerCase() === normalizedEmail
@@ -308,9 +309,18 @@ export default function App() {
         );
         return;
       }
+
+      // Validasi kata sandi jika user mengisi atau akun memiliki kata sandi terdaftar
+      if (payload.password && existing.tempPassword) {
+        if (payload.password !== existing.tempPassword) {
+          triggerToast("Kata sandi yang Anda masukkan salah. Silakan coba lagi.", "error");
+          return;
+        }
+      }
+
       if (existing.accountStatus === "pending") {
         triggerToast(
-          `Halo ${existing.displayName}, akun Google Anda masih menunggu persetujuan Admin Kurator.`,
+          `Halo ${existing.displayName}, akun Anda masih menunggu persetujuan Admin Kurator.`,
           "info"
         );
         return;

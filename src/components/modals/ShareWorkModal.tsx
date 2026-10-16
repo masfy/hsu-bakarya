@@ -84,7 +84,13 @@ export function ShareWorkModal({
 
         {/* Kartu Pratinjau Sosial Media (Open Graph Card Preview) */}
         <div className="rounded-2xl overflow-hidden border border-[#14213D]/15 bg-[#F8F7F2] shadow-sm">
-          <div className="relative h-44 bg-[#14213D] flex items-center justify-center">
+          <div
+            className={`relative h-44 flex items-center justify-center p-2 ${
+              isDefaultBanner
+                ? "bg-gradient-to-b from-white to-slate-50 border-b border-slate-200"
+                : "bg-[#14213D]"
+            }`}
+          >
             <img
               src={shareThumbUrl}
               alt={work.title}

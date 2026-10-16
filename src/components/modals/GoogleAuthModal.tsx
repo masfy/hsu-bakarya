@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { X, AlertTriangle } from "lucide-react";
+import { X, AlertTriangle, KeyRound, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { UserAccount } from "../../types";
 
 interface GoogleAuthModalProps {
@@ -10,6 +10,7 @@ interface GoogleAuthModalProps {
   onSubmitAuth: (payload: {
     mode: "login" | "register";
     email: string;
+    password?: string;
     displayName: string;
     institution: string;
     district: string;
@@ -23,26 +24,35 @@ export function GoogleAuthModal({
   onSubmitAuth,
 }: GoogleAuthModalProps) {
   const [mode, setMode] = useState<"login" | "register">(initialMode || "login");
-  const [email, setEmail] = useState("siti.rahmah@guru.sd.belajar.id");
+  const [email, setEmail] = useState("alfyarnaim@gmail.com");
+  const [password, setPassword] = useState("kadabakarya");
+  const [showPassword, setShowPassword] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [institution, setInstitution] = useState("");
   const [district, setDistrict] = useState("Kec. Amuntai Tengah, HSU");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const activeUsers = usersList.filter((u) => !u.isDeleted);
+  // Sort active users: Super Admin first, Admin second, then contributors
+  const activeUsers = [...usersList.filter((u) => !u.isDeleted)].sort((a, b) => {
+    if (a.role === "superAdmin") return -1;
+    if (b.role === "superAdmin") return 1;
+    if (a.role === "admin") return -1;
+    if (b.role === "admin") return 1;
+    return 0;
+  });
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
     if (!email.trim() || !email.includes("@")) {
-      setErrorMsg("Masukkan alamat email Akun Google / Belajar.id yang valid.");
+      setErrorMsg("Masukkan alamat email yang valid (contoh: alfyarnaim@gmail.com).");
       return;
     }
 
     if (mode === "register") {
       if (!displayName.trim() || !institution.trim()) {
-        setErrorMsg("Nama lengkap dan asal sekolah wajib diisi saat mendaftar.");
+        setErrorMsg("Nama lengkap dan asal sekolah/instansi wajib diisi saat mendaftar.");
         return;
       }
     }
@@ -50,6 +60,7 @@ export function GoogleAuthModal({
     onSubmitAuth({
       mode,
       email,
+      password,
       displayName,
       institution,
       district,
@@ -160,49 +171,91 @@ export function GoogleAuthModal({
 
           <div>
             <label className="block text-xs font-extrabold uppercase text-[#14213D] mb-1">
-              Email Google / Belajar.id *
+              Email Google / Akun Terdaftar *
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="nama.guru@guru.sd.belajar.id"
+              placeholder="alfyarnaim@gmail.com"
               className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs font-mono outline-none focus:border-[#167D78]"
             />
           </div>
 
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-extrabold uppercase text-[#14213D]">
+                Kata Sandi (Password)
+              </label>
+              {email === "alfyarnaim@gmail.com" && (
+                <span className="text-[10px] text-[#167D78] font-bold">
+                  Super Admin: kadabakarya
+                </span>
+              )}
+            </div>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Masukkan kata sandi..."
+                className="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs font-mono outline-none focus:border-[#167D78]"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
           {mode === "login" && (
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 pt-1">
               <label className="block text-[11px] font-bold text-[#727782]">
-                Pilih Akun Demo Cepat:
+                Pilih Akun Cepat:
               </label>
               <div className="flex flex-wrap gap-1.5">
-                {activeUsers.map((u) => (
-                  <button
-                    key={u.uid}
-                    type="button"
-                    onClick={() => setEmail(u.email)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
-                      email === u.email
-                        ? "bg-[#14213D] text-white border-[#14213D]"
-                        : "bg-[#F8F7F2] text-[#20252D] border-[#14213D]/15 hover:bg-gray-100"
-                    }`}
-                  >
-                    {u.displayName.split(",")[0]} ({u.accountStatus === "pending" ? "Pending" : u.role})
-                  </button>
-                ))}
+                {activeUsers.map((u) => {
+                  const isSelected = email.toLowerCase() === u.email.toLowerCase();
+                  const isSuper = u.role === "superAdmin";
+                  return (
+                    <button
+                      key={u.uid}
+                      type="button"
+                      onClick={() => {
+                        setEmail(u.email);
+                        setPassword(u.tempPassword || "kadabakarya");
+                      }}
+                      className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all flex items-center gap-1.5 ${
+                        isSelected
+                          ? "bg-[#14213D] text-white border-[#14213D] shadow-sm"
+                          : isSuper
+                          ? "bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100"
+                          : "bg-[#F8F7F2] text-[#20252D] border-[#14213D]/15 hover:bg-gray-100"
+                      }`}
+                    >
+                      {isSuper && <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />}
+                      <span>{u.displayName.split(",")[0]}</span>
+                      <span className="text-[10px] opacity-75">
+                        ({u.role === "superAdmin" ? "Super Admin" : u.role === "admin" ? "Admin" : "Guru"})
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
 
           <button
             type="submit"
-            className="w-full py-3 px-4 rounded-xl bg-[#14213D] hover:bg-[#167D78] text-white text-xs sm:text-sm font-extrabold shadow-md transition-all flex items-center justify-center gap-2"
+            className="w-full py-3 px-4 rounded-xl bg-[#14213D] hover:bg-[#167D78] text-white text-xs sm:text-sm font-extrabold shadow-md transition-all flex items-center justify-center gap-2 mt-2"
           >
             <span className="w-5 h-5 rounded-full bg-white text-[#14213D] font-extrabold text-xs flex items-center justify-center">
               G
             </span>
-            <span>{mode === "login" ? "Masuk dengan Akun Google" : "Daftar dengan Akun Google"}</span>
+            <span>{mode === "login" ? "Masuk ke Akun" : "Daftar Akun Baru"}</span>
           </button>
         </form>
       </motion.div>

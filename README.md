@@ -135,20 +135,20 @@ Jika Anda ingin menghubungkan data ke Firebase Firestore asli:
 1. Buka [Firebase Console](https://console.firebase.google.com/) dan buat project baru (misal: `bakarya-portal`).
 2. Aktifkan **Authentication** dengan penyedia **Google** dan **Email/Password**.
 3. Buat database **Cloud Firestore** dalam mode *Production*.
-4. Salin file `.env.example` menjadi `.env.local`:
+4. Buat file `.env.local` dari `.env.example`:
    ```bash
    cp .env.example .env.local
    ```
-5. Isi konfigurasi API Key dan Project ID dari Firebase Console:
-   ```env
-   VITE_FIREBASE_API_KEY=AIzaSy...
-   VITE_FIREBASE_AUTH_DOMAIN=bakarya-portal.firebaseapp.com
-   VITE_FIREBASE_PROJECT_ID=bakarya-portal
-   VITE_FIREBASE_STORAGE_BUCKET=bakarya-portal.appspot.com
-   VITE_FIREBASE_MESSAGING_SENDER_ID=123456789012
-   VITE_FIREBASE_APP_ID=1:123456789012:web:...
-   ```
-6. Deploy aturan keamanan dan indeks ke Firestore menggunakan Firebase CLI:
+5. Untuk panduan lengkap langkah-demi-langkah setup Firebase di Firebase Console hingga seeding database tanpa mock data, baca:
+   👉 **[PANDUAN_SETUP_FIREBASE.md](file:///d:/AntiGravity/BAKARYA/PANDUAN_SETUP_FIREBASE.md)**
+
+6. **Kredensial Super Admin Utama**:
+   - **Email**: `alfyarnaim@gmail.com`
+   - **Jabatan**: `Fasilitator Digitalisasi` (Gugus 2 HSU)
+   - **Kata Sandi**: `kadabakarya`
+   - **Role**: `superAdmin`
+
+7. Deploy aturan keamanan dan indeks ke Firestore menggunakan Firebase CLI:
    ```bash
    firebase deploy --only firestore:rules,firestore:indexes
    ```

@@ -29,7 +29,13 @@ export function WorkCard({
       className="bg-white rounded-3xl border border-[#14213D]/10 overflow-hidden shadow-sm hover:shadow-xl transition-all flex flex-col justify-between group"
     >
       <div onClick={onSelect} className="cursor-pointer">
-        <div className="relative h-48 overflow-hidden bg-[#14213D] flex items-center justify-center">
+        <div
+          className={`relative h-48 overflow-hidden flex items-center justify-center transition-colors ${
+            isDefaultBanner
+              ? "bg-gradient-to-b from-white to-slate-50 border-b border-slate-100"
+              : "bg-[#14213D]"
+          }`}
+        >
           <img
             src={displayThumb}
             alt={work.title}

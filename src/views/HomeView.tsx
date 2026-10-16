@@ -209,18 +209,18 @@ export function HomeView({
               className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl overflow-hidden shadow-2xl"
             >
               {/* Gambar Dokumentasi / Visual Utama dari Google Drive */}
-              <div className="relative w-full bg-[#0f192f] p-3 sm:p-4 flex items-center justify-center border-b border-white/10">
+              <div className="relative w-full bg-gradient-to-b from-white via-[#FCFBF7] to-amber-50/20 p-5 sm:p-7 flex items-center justify-center border-b border-white/20">
                 <img
                   src={BAKARYA_DEFAULT_THUMBNAIL_URL}
-                  alt="Kelas Digitalisasi Gugus 2 HSU"
-                  className="w-full h-auto max-h-64 object-contain rounded-2xl shadow-lg transition-transform duration-500"
+                  alt="Logo & Maskot BAKARYA Gugus 2 HSU"
+                  className="w-full h-auto max-h-64 object-contain rounded-2xl drop-shadow-sm transition-transform duration-500 hover:scale-105"
                   onError={(e) => {
                     e.currentTarget.onerror = null;
                     e.currentTarget.src =
                       "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=900&q=80";
                   }}
                 />
-                <div className="absolute top-5 left-5 flex items-center gap-2 bg-[#14213D]/85 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15 shadow-md">
+                <div className="absolute top-4 left-4 flex items-center gap-2 bg-[#14213D] px-3.5 py-1.5 rounded-full border border-slate-200/40 shadow-lg">
                   <img
                     src={BAKARYA_LOGO_URL}
                     alt="Logo"

@@ -1,0 +1,422 @@
+import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Sparkles,
+  Search,
+  CheckCircle2,
+  ChevronRight,
+  ArrowUpRight,
+  Layers,
+} from "lucide-react";
+import { Work, UserAccount, MediaType, UserRole } from "../types";
+import { WorkCard } from "../components/cards/WorkCard";
+import {
+  HERO_ANIMATED_PHRASES,
+  EDUCATION_LEVELS,
+} from "../data/initialData";
+import {
+  BAKARYA_LOGO_URL,
+  BAKARYA_DEFAULT_THUMBNAIL_URL,
+} from "../utils/drive";
+
+interface HomeViewProps {
+  works: Work[];
+  usersList: UserAccount[];
+  mediaTypesList: MediaType[];
+  filteredPublicWorks: Work[];
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  selectedLevel: string;
+  setSelectedLevel: (lvl: string) => void;
+  setSelectedMediaType: (m: string) => void;
+  resetAllFilters: () => void;
+  setActiveTab: (tab: string) => void;
+  sortBy: string;
+  setSortBy: (s: string) => void;
+  role: UserRole;
+  heroPhraseIdx: number;
+  onOpenWorkDetail: (w: Work) => void;
+  onShareWork: (w: Work) => void;
+  onSelectContributor: (c: UserAccount) => void;
+  onOpenAuthModal: (mode: "login" | "register") => void;
+}
+
+export function HomeView({
+  works,
+  usersList,
+  mediaTypesList,
+  filteredPublicWorks,
+  searchQuery,
+  setSearchQuery,
+  setSelectedLevel,
+  setSelectedMediaType,
+  resetAllFilters,
+  setActiveTab,
+  sortBy,
+  setSortBy,
+  role,
+  heroPhraseIdx,
+  onOpenWorkDetail,
+  onShareWork,
+  onSelectContributor,
+  onOpenAuthModal,
+}: HomeViewProps) {
+  return (
+    <motion.div
+      key="beranda"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -12 }}
+      className="space-y-14"
+    >
+      {/* HERO LANDING PAGE UTAMA BERANIMASI */}
+      <section className="relative rounded-3xl bg-[#14213D] text-white p-7 sm:p-12 lg:p-14 overflow-hidden shadow-2xl border border-white/10">
+        {/* Animated Floating Background Orbs */}
+        <motion.div
+          animate={{
+            scale: [1, 1.18, 1],
+            x: [0, 25, 0],
+            y: [0, -20, 0],
+          }}
+          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-28 -right-28 w-96 h-96 rounded-full bg-[#167D78]/40 blur-3xl pointer-events-none"
+        />
+        <motion.div
+          animate={{
+            scale: [1, 1.22, 1],
+            x: [0, -30, 0],
+            y: [0, 25, 0],
+          }}
+          transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -bottom-28 left-1/4 w-80 h-80 rounded-full bg-[#F2B84B]/25 blur-3xl pointer-events-none"
+        />
+
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+          <div className="lg:col-span-7 space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-[#F2B84B] text-xs font-bold tracking-wider uppercase shadow-sm"
+            >
+              <motion.span
+                animate={{ rotate: [0, 20, -20, 0] }}
+                transition={{ duration: 3, repeat: Infinity }}
+              >
+                <Sparkles className="w-4 h-4 text-[#F2B84B]" />
+              </motion.span>
+              <span>Portal Karya Pendidik Banua</span>
+            </motion.div>
+
+            <div className="space-y-2">
+              <motion.h1
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight leading-[1.18]"
+              >
+                Dari Banua,{" "}
+                <span className="inline-block relative min-w-[260px] sm:min-w-[340px]">
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={heroPhraseIdx}
+                      initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
+                      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                      exit={{ opacity: 0, y: -20, filter: "blur(6px)" }}
+                      transition={{ duration: 0.45, ease: "easeOut" }}
+                      className="inline-block text-[#F2B84B] underline decoration-[#167D78] decoration-wavy decoration-2 underline-offset-8"
+                    >
+                      {HERO_ANIMATED_PHRASES[heroPhraseIdx]}
+                    </motion.span>
+                  </AnimatePresence>
+                </span>
+                <br />
+                <span className="bg-gradient-to-r from-white via-white to-[#F2B84B] bg-clip-text text-transparent">
+                  Berdampak untuk Semua.
+                </span>
+              </motion.h1>
+            </div>
+
+            <motion.p
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-white/85 text-sm sm:text-base lg:text-lg leading-relaxed max-w-2xl"
+            >
+              Pusat kurasi media pembelajaran interaktif, game edukasi, dan alat bantu kelas hasil program{" "}
+              <strong className="text-[#F2B84B]">
+                Kelas Digitalisasi Gugus 2 — Hulu Sungai Utara (Sekolah Penerima BOS Kinerja Terbaik 2026)
+              </strong>
+              , dikembangkan terbuka untuk seluruh guru Indonesia.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="bg-white p-2 rounded-2xl shadow-2xl flex flex-col sm:flex-row items-center gap-2 max-w-xl border border-white/20"
+            >
+              <div className="flex items-center gap-3 px-3.5 py-2 w-full text-[#20252D]">
+                <Search className="w-5 h-5 text-[#167D78] shrink-0" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") setActiveTab("jelajah");
+                  }}
+                  placeholder="Cari game, pembagi kelompok, modul, atau nama guru..."
+                  className="w-full text-sm font-medium focus:outline-none bg-transparent"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab("jelajah")}
+                className="w-full sm:w-auto shrink-0 bg-[#167D78] hover:bg-[#14213D] text-white font-bold text-sm px-6 py-3 rounded-xl transition-colors shadow-md"
+              >
+                Cari
+              </button>
+            </motion.div>
+
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="text-xs text-white/60 font-semibold mr-1">Jenjang:</span>
+              {EDUCATION_LEVELS.map((lvl, idx) => (
+                <motion.button
+                  key={lvl.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3 + idx * 0.06 }}
+                  whileHover={{ scale: 1.07, y: -2 }}
+                  onClick={() => {
+                    setSelectedLevel(lvl.id);
+                    setActiveTab("jelajah");
+                  }}
+                  className="text-xs font-bold px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-[#F2B84B] hover:text-[#14213D] transition-colors"
+                >
+                  {lvl.name}
+                </motion.button>
+              ))}
+            </div>
+          </div>
+
+          {/* VISUAL BANNER DARI GOOGLE DRIVE & STATISTIK */}
+          <div className="lg:col-span-5">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              whileHover={{ y: -6 }}
+              className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl overflow-hidden shadow-2xl"
+            >
+              {/* Gambar Dokumentasi / Visual Utama dari Google Drive */}
+              <div className="relative w-full bg-[#0f192f] p-3 sm:p-4 flex items-center justify-center border-b border-white/10">
+                <img
+                  src={BAKARYA_DEFAULT_THUMBNAIL_URL}
+                  alt="Kelas Digitalisasi Gugus 2 HSU"
+                  className="w-full h-auto max-h-64 object-contain rounded-2xl shadow-lg transition-transform duration-500"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src =
+                      "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=900&q=80";
+                  }}
+                />
+                <div className="absolute top-5 left-5 flex items-center gap-2 bg-[#14213D]/85 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15 shadow-md">
+                  <img
+                    src={BAKARYA_LOGO_URL}
+                    alt="Logo"
+                    className="w-4 h-4 object-contain rounded-sm"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                  <span className="text-[11px] font-extrabold text-[#F2B84B] tracking-wide">
+                    Gugus 2 HSU • Kalsel
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-5">
+                <div>
+                  <span className="text-[10px] uppercase tracking-widest text-[#F2B84B] font-extrabold block">
+                    Ekosistem Pendidikan Banua
+                  </span>
+                  <h3 className="font-display text-base sm:text-lg font-extrabold text-white mt-0.5">
+                    Ringkasan Portal BAKARYA
+                  </h3>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3.5">
+                  <div className="bg-white/10 p-4 rounded-2xl border border-white/10">
+                    <div className="font-display text-3xl sm:text-4xl font-extrabold text-white">
+                      {works.filter((w) => w.status === "published" && !w.isDeleted).length}
+                    </div>
+                    <div className="text-xs text-white/75 font-semibold mt-1">Karya Terbit</div>
+                  </div>
+                  <div className="bg-white/10 p-4 rounded-2xl border border-white/10">
+                    <div className="font-display text-3xl sm:text-4xl font-extrabold text-[#F2B84B]">
+                      {
+                        usersList.filter(
+                          (u) => !u.isDeleted && u.role === "contributor" && u.accountStatus === "active"
+                        ).length
+                      }
+                    </div>
+                    <div className="text-xs text-white/75 font-semibold mt-1">Guru Kontributor</div>
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-xs text-white/85">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#F2B84B] shrink-0" />
+                    <span>Game, Media, Video & Alat Bantu Kelas</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#F2B84B] shrink-0" />
+                    <span>Mendukung Thumbnail Otomatis dari Google Drive</span>
+                  </div>
+                </div>
+
+                {role === "public" && (
+                  <div className="pt-1 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onOpenAuthModal("register")}
+                      className="flex-1 py-2.5 px-4 rounded-xl bg-[#F2B84B] hover:bg-white text-[#14213D] font-extrabold text-xs transition-all text-center shadow-md"
+                    >
+                      Daftar Akun
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onOpenAuthModal("login")}
+                      className="flex-1 py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-all text-center border border-white/15"
+                    >
+                      Masuk
+                    </button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* PILIHAN JENIS MEDIA */}
+      <section className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <span className="text-xs font-extrabold uppercase tracking-widest text-[#167D78]">
+              Ragam Format Inovasi
+            </span>
+            <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-[#14213D] mt-1">
+              Jenis Media & Alat Bantu Kelas
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab("jelajah")}
+            className="text-sm font-bold text-[#167D78] hover:text-[#14213D] flex items-center gap-1"
+          >
+            <span>Lihat Semua</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {mediaTypesList.map((media) => {
+            const IconComponent = media.icon || Layers;
+            const count = works.filter(
+              (w) => w.status === "published" && !w.isDeleted && w.mediaTypeId === media.id
+            ).length;
+            return (
+              <motion.button
+                key={media.id}
+                whileHover={{ y: -5, scale: 1.01 }}
+                onClick={() => {
+                  resetAllFilters();
+                  setSelectedMediaType(media.id);
+                  setActiveTab("jelajah");
+                }}
+                className="bg-white p-6 rounded-3xl border border-[#14213D]/10 shadow-sm hover:shadow-xl hover:border-[#167D78] transition-all text-left flex flex-col justify-between group relative overflow-hidden"
+              >
+                <div className="flex items-start justify-between gap-4 w-full">
+                  <div className="w-14 h-14 rounded-2xl bg-[#F8F7F2] group-hover:bg-[#167D78] text-[#14213D] group-hover:text-white flex items-center justify-center transition-colors shrink-0 shadow-sm">
+                    <IconComponent className="w-7 h-7" />
+                  </div>
+
+                  <div className="text-right">
+                    <div className="font-display text-3xl sm:text-4xl font-extrabold text-[#167D78] group-hover:text-[#14213D] leading-none transition-colors">
+                      {count}
+                    </div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#727782] block mt-1">
+                      Karya Terbit
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-5 pt-4 border-t border-[#14213D]/5 flex items-end justify-between gap-2 w-full">
+                  <div>
+                    <h3 className="font-display font-extrabold text-[#14213D] text-lg group-hover:text-[#167D78] transition-colors">
+                      {media.name}
+                    </h3>
+                    <p className="text-xs text-[#727782] mt-1 leading-relaxed">{media.description}</p>
+                  </div>
+                  <ArrowUpRight className="w-5 h-5 text-[#727782] group-hover:text-[#167D78] shrink-0 transition-colors" />
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* KARYA UNGGULAN & TERBARU */}
+      <section className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <span className="text-xs font-extrabold uppercase tracking-widest text-[#167D78]">
+              Karya Pilihan Banua
+            </span>
+            <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-[#14213D] mt-1">
+              Karya Terbaru & Terpopuler
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-[#14213D]/10 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setSortBy("newest")}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                sortBy === "newest" ? "bg-[#14213D] text-white" : "text-[#727782] hover:text-[#14213D]"
+              }`}
+            >
+              Terbaru
+            </button>
+            <button
+              type="button"
+              onClick={() => setSortBy("popular")}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                sortBy === "popular" ? "bg-[#14213D] text-white" : "text-[#727782] hover:text-[#14213D]"
+              }`}
+            >
+              Populer
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredPublicWorks.slice(0, 6).map((work) => (
+            <WorkCard
+              key={work.id}
+              work={work}
+              mediaTypesList={mediaTypesList}
+              onSelect={() => onOpenWorkDetail(work)}
+              onShare={onShareWork}
+              onSelectContributor={(contribId) => {
+                const found = usersList.find((c) => c.uid === contribId);
+                if (found) onSelectContributor(found);
+              }}
+            />
+          ))}
+        </div>
+      </section>
+    </motion.div>
+  );
+}

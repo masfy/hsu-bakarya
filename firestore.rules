@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() { 
+      return request.auth != null; 
+    }
+    
+    function getUserData() { 
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; 
+    }
+    
+    function hasRole(roles) { 
+      return isSignedIn() && getUserData().accountStatus == 'active' && (getUserData().role in roles); 
+    }
+    
+    function isAdmin() { 
+      return hasRole(['admin', 'superAdmin']); 
+    }
+
+    // Koleksi Karya Digital
+    match /works/{workId} {
+      allow read: if (resource.data.status == 'published' && resource.data.isDeleted == false) || isAdmin() || (isSignedIn() && resource.data.contributorId == request.auth.uid);
+      allow create: if isSignedIn();
+      allow update: if (isSignedIn() && resource.data.contributorId == request.auth.uid) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Koleksi Pengguna (Kontributor & Admin)
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if (isSignedIn() && request.auth.uid == userId) || isAdmin();
+      allow delete: if hasRole(['superAdmin']);
+    }
+
+    // Koleksi Taksonomi (Mata Pelajaran, Kategori, Format Media)
+    match /subjects/{id} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    match /categories/{id} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    match /mediaTypes/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Koleksi Moderasi & Audit Log
+    match /moderationLogs/{logId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Koleksi Analitik
+    match /analyticsDaily/{dateKey} {
+      allow read: if true;
+      allow write: if true;
+    }
+    match /analyticsMonthly/{monthKey} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

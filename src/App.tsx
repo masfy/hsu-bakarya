@@ -29,6 +29,7 @@ import {
 import {
   getDriveDirectImageUrl,
   BAKARYA_LOGO_URL,
+  BAKARYA_FAVICON_URL,
   BAKARYA_DEFAULT_THUMBNAIL_URL,
 } from "./utils/drive";
 import { isFirebaseConfigured } from "./services/firebase";
@@ -187,7 +188,7 @@ export default function App() {
       link.rel = "icon";
       document.head.appendChild(link);
     }
-    link.href = BAKARYA_LOGO_URL;
+    link.href = BAKARYA_FAVICON_URL || "/favicon.png";
 
     const interval = setInterval(() => {
       setHeroPhraseIdx((prev) => (prev + 1) % HERO_ANIMATED_PHRASES.length);

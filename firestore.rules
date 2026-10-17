@@ -37,7 +37,7 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isSuperAdminEmail() || isSignedIn() || (request.resource.data.accountStatus == 'pending');
       allow update: if isSuperAdminEmail() || (isSignedIn() && request.auth.uid == userId) || isAdmin();
-      allow delete: if isSuperAdminEmail() || hasRole(['superAdmin']);
+      allow delete: if isSuperAdminEmail() || isAdmin();
     }
 
     // Koleksi Taksonomi (Mata Pelajaran, Kategori, Format Media)

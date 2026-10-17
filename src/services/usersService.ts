@@ -4,6 +4,7 @@ import {
   getDocs,
   setDoc,
   updateDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "./firebase";
 import { UserAccount } from "../types";
@@ -16,7 +17,10 @@ export async function fetchUsersFromFirestore(): Promise<UserAccount[] | null> {
     const snapshot = await getDocs(collection(db, USERS_COLLECTION));
     const list: UserAccount[] = [];
     snapshot.forEach((d) => {
-      list.push({ uid: d.id, ...d.data() } as UserAccount);
+      const data = d.data() as UserAccount;
+      if (!data.isDeleted) {
+        list.push({ uid: d.id, ...data });
+      }
     });
     return list;
   } catch (error) {
@@ -41,10 +45,21 @@ export async function deleteUserInFirestore(userId: string): Promise<boolean> {
   if (!isFirebaseConfigured || !db) return false;
   try {
     const userRef = doc(db, USERS_COLLECTION, userId);
-    await updateDoc(userRef, { isDeleted: true, deletedAt: new Date().toISOString() });
+    await deleteDoc(userRef);
     return true;
   } catch (error) {
-    console.error("Gagal menghapus pengguna di Firestore:", error);
-    return false;
+    console.warn("deleteDoc pengguna gagal, mencoba soft delete...", error);
+    try {
+      const userRef = doc(db, USERS_COLLECTION, userId);
+      await updateDoc(userRef, { isDeleted: true, deletedAt: new Date().toISOString() });
+      return true;
+    } catch (e2) {
+      console.error("Gagal menghapus pengguna di Firestore:", e2);
+      return false;
+    }
   }
+}
+
+export async function deleteUserPermanentlyInFirestore(userId: string): Promise<boolean> {
+  return deleteUserInFirestore(userId);
 }

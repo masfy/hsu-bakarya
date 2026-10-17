@@ -98,9 +98,18 @@ export function Footer({ setActiveTab }: FooterProps) {
 
         <div className="mt-12 pt-6 border-t border-[#14213D]/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#727782]">
           <p>© {new Date().getFullYear()} BAKARYA HSU. Hak Cipta Dilindungi Undang-Undang.</p>
-          <p className="flex items-center gap-1">
-            Dibangun dengan rasa bangga untuk Pendidik Banua
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <span>Support by</span>
+            <a
+              href="https://www.mfytech.my.id"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-[#167D78] hover:text-[#14213D] underline underline-offset-2 transition-colors flex items-center gap-1"
+            >
+              <span>MfyTech</span>
+              <span className="text-[10px] text-[#727782]">(www.mfytech.my.id)</span>
+            </a>
+          </div>
         </div>
       </div>
     </footer>

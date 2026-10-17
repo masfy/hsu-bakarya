@@ -45,16 +45,13 @@ export function Navbar({
   const navItems = [
     { id: "beranda", label: "Beranda" },
     { id: "jelajah", label: "Karya" },
+    {
+      id: "dashboard",
+      label: role === "public" ? "Dashboard" : role === "contributor" ? "Dashboard" : "Moderasi",
+      highlight: role !== "public",
+    },
     { id: "kontributor", label: "Kontributor" },
-    ...(role !== "public"
-      ? [
-          {
-            id: "dashboard",
-            label: role === "contributor" ? "Dashboard" : "Moderasi",
-            highlight: true,
-          },
-        ]
-      : []),
+    { id: "analitik", label: "Analitik" },
     ...(role === "admin" || role === "superAdmin"
       ? [
           {
@@ -62,7 +59,6 @@ export function Navbar({
             label: pendingUsersCount > 0 ? `Akun (${pendingUsersCount})` : "Akun",
             highlight: true,
           },
-          { id: "analitik", label: "Analitik" },
         ]
       : []),
     { id: "panduan", label: "Panduan" },

@@ -50,6 +50,7 @@ import {
 import {
   fetchUsersFromFirestore,
   saveUserToFirestore,
+  deleteUserInFirestore,
 } from "./services/usersService";
 
 // Layout & Components
@@ -598,13 +599,16 @@ export default function App() {
     triggerToast(`Status akses akun ${targetUser.displayName} disetel ke: ${newStatus.toUpperCase()}.`, "success");
   };
 
-  const handleDeleteUser = (targetUid: string, mode: "soft" | "permanent" = "soft") => {
+  const handleDeleteUser = async (targetUid: string, mode: "soft" | "permanent" = "permanent") => {
     const targetUser = usersList.find((u) => u.uid === targetUid);
     if (!targetUser) return;
 
     if (mode === "permanent") {
       setUsersList((prev) => prev.filter((u) => u.uid !== targetUid));
-      triggerToast(`Akun ${targetUser.displayName} telah dihapus permanen.`, "info");
+      if (isFirebaseConfigured) {
+        await deleteUserInFirestore(targetUid);
+      }
+      triggerToast(`Akun ${targetUser.displayName} telah dihapus permanen dari Firebase.`, "info");
     } else {
       const updated: UserAccount = {
         ...targetUser,
@@ -615,7 +619,7 @@ export default function App() {
       };
       setUsersList((prev) => prev.map((u) => (u.uid === targetUid ? updated : u)));
       if (isFirebaseConfigured) saveUserToFirestore(updated);
-      triggerToast(`Akun ${targetUser.displayName} dinonaktifkan (soft delete).`, "info");
+      triggerToast(`Akun ${targetUser.displayName} dinonaktifkan (akses dibekukan).`, "info");
     }
     setUserConfirmDelete(null);
   };
@@ -883,11 +887,12 @@ export default function App() {
             />
           )}
 
-          {activeTab === "dashboard" && role !== "public" && (
+          {activeTab === "dashboard" && (
             <DashboardView
               role={role}
               currentUserProfile={currentUserProfile}
               works={works}
+              usersList={usersList}
               onOpenWorkDetail={handleOpenWorkDetail}
               onOpenUploadModal={() => {
                 setEditingWork(null);
@@ -907,6 +912,10 @@ export default function App() {
                 )
               }
               onOpenSelfProfileModal={() => setIsSelfProfileModalOpen(true)}
+              onOpenAuthModal={(m) => {
+                setAuthModalMode(m);
+                setIsAuthModalOpen(true);
+              }}
               setActiveTab={setActiveTab}
             />
           )}
@@ -940,7 +949,16 @@ export default function App() {
           )}
 
           {activeTab === "analitik" && (
-            <AnalyticsView dailyStats={dailyStats} monthlyStats={monthlyStats} />
+            <AnalyticsView
+              works={works}
+              usersList={usersList}
+              categoriesList={categoriesList}
+              subjectsList={subjectsList}
+              mediaTypesList={mediaTypesList}
+              dailyStats={dailyStats}
+              monthlyStats={monthlyStats}
+              onOpenWorkDetail={handleOpenWorkDetail}
+            />
           )}
 
           {activeTab === "panduan" && <GuideView />}

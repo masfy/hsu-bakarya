@@ -95,7 +95,33 @@ export default function App() {
       return null;
     }
   });
-  const [activeTab, setActiveTab] = useState("beranda");
+  const [activeTab, setActiveTab] = useState(() => {
+    try {
+      const hash = window.location.hash.replace("#", "").trim();
+      if (["beranda", "jelajah", "kontributor", "dashboard", "pengguna", "analitik", "panduan", "arsitektur"].includes(hash)) {
+        return hash;
+      }
+    } catch {}
+    return "beranda";
+  });
+
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash.replace("#", "").trim();
+      if (["beranda", "jelajah", "kontributor", "dashboard", "pengguna", "analitik", "panduan", "arsitektur"].includes(hash)) {
+        setActiveTab(hash);
+      }
+    };
+    window.addEventListener("hashchange", handleHash);
+    return () => window.removeEventListener("hashchange", handleHash);
+  }, []);
+
+  const handleSetActiveTab = (tab: string) => {
+    setActiveTab(tab);
+    try {
+      window.location.hash = tab;
+    } catch {}
+  };
 
   const [works, setWorks] = useState<Work[]>(() => (isFirebaseConfigured ? [] : INITIAL_WORKS));
   const [usersList, setUsersList] = useState<UserAccount[]>(() => {
@@ -793,7 +819,7 @@ export default function App() {
       {/* Header / Navbar */}
       <Navbar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleSetActiveTab}
         role={role}
         setRole={setRole}
         setLoggedInUserUid={setLoggedInUserUid}
@@ -916,7 +942,7 @@ export default function App() {
                 setAuthModalMode(m);
                 setIsAuthModalOpen(true);
               }}
-              setActiveTab={setActiveTab}
+              setActiveTab={handleSetActiveTab}
             />
           )}
 
@@ -970,7 +996,7 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <Footer setActiveTab={setActiveTab} />
+      <Footer setActiveTab={handleSetActiveTab} />
 
       {/* MODALS */}
       <AnimatePresence>

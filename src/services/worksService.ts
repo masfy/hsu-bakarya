@@ -39,7 +39,8 @@ export async function saveWorkToFirestore(work: Work): Promise<boolean> {
   if (!isFirebaseConfigured || !db) return false;
   try {
     const workRef = doc(db, WORKS_COLLECTION, work.id);
-    await setDoc(workRef, work, { merge: true });
+    const cleanWork = JSON.parse(JSON.stringify(work));
+    await setDoc(workRef, cleanWork, { merge: true });
     return true;
   } catch (error) {
     console.error("Gagal menyimpan karya ke Firestore:", error);

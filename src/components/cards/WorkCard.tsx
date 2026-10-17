@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Eye, MousePointerClick, Share2 } from "lucide-react";
 import { Work, MediaType } from "../../types";
 import { getDriveDirectImageUrl, BAKARYA_DEFAULT_THUMBNAIL_URL } from "../../utils/drive";
+import { CLASSES_DATA } from "../../data/initialData";
 
 interface WorkCardProps {
   work: Work;
@@ -22,6 +23,17 @@ export function WorkCard({
   const mediaType = mediaTypesList.find((m) => m.id === work.mediaTypeId);
   const displayThumb = getDriveDirectImageUrl(work.thumbnailURL) || BAKARYA_DEFAULT_THUMBNAIL_URL;
   const isDefaultBanner = displayThumb === BAKARYA_DEFAULT_THUMBNAIL_URL;
+
+  // Format label kelas singkat
+  const classBadgeText = React.useMemo(() => {
+    if (!work.classIds || work.classIds.length === 0) return null;
+    const names = CLASSES_DATA.filter((c) => work.classIds.includes(c.id)).map((c) =>
+      c.name.replace("Kelas ", "Kls ").replace("TK A / TK B", "PAUD/TK").replace("Lintas Kelas / Umum", "Umum")
+    );
+    if (names.length === 0) return null;
+    if (names.length <= 2) return names.join(", ");
+    return `${names.slice(0, 2).join(", ")} +${names.length - 2}`;
+  }, [work.classIds]);
 
   return (
     <motion.div
@@ -54,6 +66,11 @@ export function WorkCard({
             <span className="px-2.5 py-1 rounded-full bg-[#F2B84B] text-[#14213D] text-[11px] font-extrabold uppercase">
               {work.educationLevelIds.join(" • ")}
             </span>
+            {classBadgeText && (
+              <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md text-[#14213D] text-[10px] font-extrabold shadow-sm">
+                {classBadgeText}
+              </span>
+            )}
           </div>
         </div>
 

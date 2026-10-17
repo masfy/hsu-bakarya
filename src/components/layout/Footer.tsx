@@ -107,7 +107,7 @@ export function Footer({ setActiveTab }: FooterProps) {
               className="font-bold text-[#167D78] hover:text-[#14213D] underline underline-offset-2 transition-colors flex items-center gap-1"
             >
               <span>MfyTech</span>
-              <span className="text-[10px] text-[#727782]">(www.mfytech.my.id)</span>
+              <span className="text-[10px] text-[#727782]"></span>
             </a>
           </div>
         </div>

@@ -123,14 +123,48 @@ export default function App() {
     } catch {}
   };
 
-  const [works, setWorks] = useState<Work[]>(() => (isFirebaseConfigured ? [] : INITIAL_WORKS));
+  const [works, setWorks] = useState<Work[]>(() => {
+    try {
+      const cached = localStorage.getItem("bakarya_cached_works");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return isFirebaseConfigured ? [] : INITIAL_WORKS;
+  });
+
   const [usersList, setUsersList] = useState<UserAccount[]>(() => {
+    try {
+      const cached = localStorage.getItem("bakarya_cached_users");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
     if (isFirebaseConfigured) {
       const superAdmin = CONTRIBUTORS.find((u) => u.role === "superAdmin");
       return superAdmin ? [superAdmin] : [];
     }
     return CONTRIBUTORS;
   });
+
+  // Sync usersList and works to localStorage as instant offline cache
+  useEffect(() => {
+    try {
+      if (usersList && usersList.length > 0) {
+        localStorage.setItem("bakarya_cached_users", JSON.stringify(usersList));
+      }
+    } catch {}
+  }, [usersList]);
+
+  useEffect(() => {
+    try {
+      if (works && works.length > 0) {
+        localStorage.setItem("bakarya_cached_works", JSON.stringify(works));
+      }
+    } catch {}
+  }, [works]);
   const [subjectsList, setSubjectsList] = useState<Subject[]>(INITIAL_SUBJECTS_DATA);
   const [categoriesList, setCategoriesList] = useState<Category[]>(INITIAL_CATEGORIES_DATA);
   const [mediaTypesList, setMediaTypesList] = useState<MediaType[]>(INITIAL_MEDIA_TYPES);
@@ -229,7 +263,21 @@ export default function App() {
       });
       fetchUsersFromFirestore().then((remoteUsers) => {
         if (remoteUsers !== null && remoteUsers.length > 0) {
-          setUsersList(remoteUsers);
+          setUsersList((prev) => {
+            const merged = remoteUsers.map((remote) => {
+              const local = prev.find((p) => p.uid === remote.uid);
+              if (
+                local &&
+                local.district &&
+                local.district !== "Kec. Amuntai Tengah, HSU" &&
+                (!remote.district || remote.district === "Kec. Amuntai Tengah, HSU")
+              ) {
+                return { ...remote, district: local.district };
+              }
+              return remote;
+            });
+            return merged;
+          });
         }
       });
     }
@@ -304,10 +352,27 @@ export default function App() {
     triggerToast("Anda telah keluar dari sesi akun.", "info");
   };
 
-  // Set Session ID
+  // Set Session ID & Increment Daily Traffic
   useEffect(() => {
     const generated = "sess_wita_" + Math.random().toString(36).substring(2, 9);
     setSessionId(generated);
+
+    try {
+      const sessionKey = "bakarya_visit_counted_" + new Date().toISOString().slice(0, 10);
+      if (!sessionStorage.getItem(sessionKey)) {
+        sessionStorage.setItem(sessionKey, "1");
+        setDailyStats((prev) => {
+          const updated = [...prev];
+          if (updated.length > 0) {
+            const last = { ...updated[updated.length - 1] };
+            last.visits = (last.visits || 0) + 1;
+            last.pageViews = (last.pageViews || 0) + 1;
+            updated[updated.length - 1] = last;
+          }
+          return updated;
+        });
+      }
+    } catch {}
   }, []);
 
   // Title, Favicon & Hero Phrase Rotation
@@ -847,6 +912,8 @@ export default function App() {
               usersList={usersList}
               mediaTypesList={mediaTypesList}
               filteredPublicWorks={filteredPublicWorks}
+              dailyStats={dailyStats}
+              monthlyStats={monthlyStats}
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
               selectedLevel={selectedLevel}
@@ -1057,8 +1124,8 @@ export default function App() {
             onAddCategory={handleAddCustomCategory}
             onAddMediaType={handleAddCustomMediaType}
             onClose={() => setIsFormModalOpen(false)}
-            onSave={(payload, submitForReview) => {
-              const nowWITA = "16 Okt 2026, 20:30 WITA";
+            onSave={async (payload, submitForReview) => {
+              const nowWITA = new Date().toLocaleString("id-ID", { timeZone: "Asia/Makassar" }) + " WITA";
               const resolvedThumb = payload.thumbnailURL?.trim()
                 ? getDriveDirectImageUrl(payload.thumbnailURL)
                 : getDriveDirectImageUrl(payload.mediaURL) !== payload.mediaURL
@@ -1067,9 +1134,15 @@ export default function App() {
 
               if (editingWork) {
                 const isAlreadyPublished = editingWork.status === "published";
+                const targetClasses =
+                  payload.classIds && payload.classIds.length > 0
+                    ? payload.classIds
+                    : editingWork.classIds || ["k4"];
+
                 const updated: Work = {
                   ...editingWork,
                   ...payload,
+                  classIds: targetClasses,
                   thumbnailURL: resolvedThumb,
                   status: isAlreadyPublished
                     ? "published"
@@ -1081,7 +1154,7 @@ export default function App() {
                 } as Work;
 
                 setWorks((prev) => prev.map((w) => (w.id === editingWork.id ? updated : w)));
-                if (isFirebaseConfigured) saveWorkToFirestore(updated);
+                if (isFirebaseConfigured) await saveWorkToFirestore(updated);
                 triggerToast(
                   isAlreadyPublished
                     ? "Perubahan karya & tautan media berhasil disimpan!"
@@ -1102,7 +1175,7 @@ export default function App() {
                   mediaTypeId: payload.mediaTypeId || "game",
                   categoryIds: payload.categoryIds || ["cat-ekologi"],
                   educationLevelIds: payload.educationLevelIds || ["sd"],
-                  classIds: payload.classIds || ["k4"],
+                  classIds: payload.classIds && payload.classIds.length > 0 ? payload.classIds : ["k4"],
                   subjectIds: payload.subjectIds || ["matematika"],
                   contributorId: currentUserProfile?.uid || "uid-contrib-1",
                   contributorNameSnapshot: currentUserProfile?.displayName || "Siti Rahmah, S.Pd.",
@@ -1119,7 +1192,7 @@ export default function App() {
                 };
 
                 setWorks((prev) => [newWork, ...prev]);
-                if (isFirebaseConfigured) saveWorkToFirestore(newWork);
+                if (isFirebaseConfigured) await saveWorkToFirestore(newWork);
                 triggerToast(submitForReview ? "Karya berhasil diajukan ke Admin!" : "Disimpan sebagai Draf.", "success");
               }
               setIsFormModalOpen(false);

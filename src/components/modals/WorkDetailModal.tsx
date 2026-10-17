@@ -7,6 +7,7 @@ import {
   getDriveDirectImageUrl,
   BAKARYA_DEFAULT_THUMBNAIL_URL,
 } from "../../utils/drive";
+import { CLASSES_DATA } from "../../data/initialData";
 
 interface WorkDetailModalProps {
   work: Work | null;
@@ -83,6 +84,20 @@ export function WorkDetailModal({
             <p className="text-sm font-bold text-[#167D78] mt-1">
               Oleh {work.contributorNameSnapshot} • {work.contributorInstitution}
             </p>
+            {/* Badges for Jenjang & Kelas */}
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <span className="px-2.5 py-1 rounded-lg bg-[#14213D] text-white text-xs font-extrabold uppercase tracking-wide">
+                Jenjang: {work.educationLevelIds.join(", ").toUpperCase()}
+              </span>
+              {work.classIds && work.classIds.length > 0 && (
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-bold">
+                  Target Kelas:{" "}
+                  {CLASSES_DATA.filter((c) => work.classIds.includes(c.id))
+                    .map((c) => c.name)
+                    .join(", ") || work.classIds.join(", ")}
+                </span>
+              )}
+            </div>
           </div>
 
           <p className="text-sm sm:text-base text-[#20252D] leading-relaxed whitespace-pre-line">

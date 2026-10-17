@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { X, AlertTriangle, Check } from "lucide-react";
 import { Work, Subject, Category, MediaType } from "../../types";
-import { EDUCATION_LEVELS } from "../../data/initialData";
+import { EDUCATION_LEVELS, CLASSES_DATA } from "../../data/initialData";
 
 interface WorkFormWizardModalProps {
   initialData: Work | null;
@@ -35,6 +35,9 @@ export function WorkFormWizardModal({
   const [educationLevelIds, setEducationLevelIds] = useState<string[]>(
     initialData?.educationLevelIds || ["sd"]
   );
+  const [classIds, setClassIds] = useState<string[]>(
+    initialData?.classIds && initialData.classIds.length > 0 ? initialData.classIds : ["k4"]
+  );
   const [subjectIds, setSubjectIds] = useState<string[]>(
     initialData?.subjectIds || ["matematika"]
   );
@@ -44,6 +47,22 @@ export function WorkFormWizardModal({
   const [mediaURL, setMediaURL] = useState(initialData?.mediaURL || "");
   const [thumbnailURL, setThumbnailURL] = useState(initialData?.thumbnailURL || "");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Sync state if initialData changes
+  React.useEffect(() => {
+    if (initialData) {
+      setTitle(initialData.title || "");
+      setShortDescription(initialData.shortDescription || "");
+      setDescription(initialData.description || "");
+      setMediaTypeId(initialData.mediaTypeId || "game");
+      setEducationLevelIds(initialData.educationLevelIds || ["sd"]);
+      setClassIds(initialData.classIds && initialData.classIds.length > 0 ? initialData.classIds : ["k4"]);
+      setSubjectIds(initialData.subjectIds || ["matematika"]);
+      setCategoryIds(initialData.categoryIds || ["cat-ekologi"]);
+      setMediaURL(initialData.mediaURL || "");
+      setThumbnailURL(initialData.thumbnailURL || "");
+    }
+  }, [initialData]);
 
   // Input manual baru
   const [customSubjectInput, setCustomSubjectInput] = useState("");
@@ -92,6 +111,7 @@ export function WorkFormWizardModal({
         description,
         mediaTypeId,
         educationLevelIds,
+        classIds: classIds.length > 0 ? classIds : ["k4"],
         subjectIds,
         categoryIds,
         mediaURL,
@@ -226,6 +246,151 @@ export function WorkFormWizardModal({
                     {lvl.name}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Sasaran Kelas / Tingkat Peserta Didik */}
+            <div className="p-3.5 rounded-2xl bg-[#F8F7F2] border border-[#14213D]/10 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <label className="block text-xs font-extrabold uppercase text-[#14213D]">
+                    Sasaran Kelas / Tingkat Peserta Didik *
+                  </label>
+                  <span className="text-[11px] text-[#727782]">
+                    Pilih satu atau lebih kelas yang sesuai untuk karya pembelajaran ini
+                  </span>
+                </div>
+
+                {/* Tombol Pintas Pilihan Cepat */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setClassIds(["k1", "k2", "k3", "k4", "k5", "k6"])}
+                    className="px-2.5 py-1 rounded-lg text-[10px] font-extrabold bg-white hover:bg-slate-100 text-[#14213D] border border-[#14213D]/15 shadow-2xs transition-colors"
+                  >
+                    Semua SD (1-6)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setClassIds(["k7", "k8", "k9"])}
+                    className="px-2.5 py-1 rounded-lg text-[10px] font-extrabold bg-white hover:bg-slate-100 text-[#14213D] border border-[#14213D]/15 shadow-2xs transition-colors"
+                  >
+                    Semua SMP (7-9)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setClassIds(["k10", "k11", "k12"])}
+                    className="px-2.5 py-1 rounded-lg text-[10px] font-extrabold bg-white hover:bg-slate-100 text-[#14213D] border border-[#14213D]/15 shadow-2xs transition-colors"
+                  >
+                    Semua SMA (10-12)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setClassIds(["umum-all"])}
+                    className="px-2.5 py-1 rounded-lg text-[10px] font-extrabold bg-white hover:bg-slate-100 text-[#14213D] border border-[#14213D]/15 shadow-2xs transition-colors"
+                  >
+                    Umum
+                  </button>
+                </div>
+              </div>
+
+              {/* Kelompok Pilihan Kelas */}
+              <div className="space-y-2.5 pt-1">
+                {/* SD / MI */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1.5">
+                  <span className="text-[10px] font-extrabold text-[#727782] uppercase w-20 shrink-0">
+                    SD / MI:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {CLASSES_DATA.filter((c) => c.educationLevelId === "sd").map((cls) => (
+                      <button
+                        key={cls.id}
+                        type="button"
+                        onClick={() => toggleArrayItem(classIds, setClassIds, cls.id)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 ${
+                          classIds.includes(cls.id)
+                            ? "bg-[#167D78] text-white border-[#167D78] shadow-xs"
+                            : "bg-white text-[#20252D] border-[#14213D]/15 hover:bg-gray-50"
+                        }`}
+                      >
+                        {classIds.includes(cls.id) && <Check className="w-3.5 h-3.5" />}
+                        <span>{cls.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* SMP / MTs */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1.5">
+                  <span className="text-[10px] font-extrabold text-[#727782] uppercase w-20 shrink-0">
+                    SMP / MTs:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {CLASSES_DATA.filter((c) => c.educationLevelId === "smp").map((cls) => (
+                      <button
+                        key={cls.id}
+                        type="button"
+                        onClick={() => toggleArrayItem(classIds, setClassIds, cls.id)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 ${
+                          classIds.includes(cls.id)
+                            ? "bg-[#167D78] text-white border-[#167D78] shadow-xs"
+                            : "bg-white text-[#20252D] border-[#14213D]/15 hover:bg-gray-50"
+                        }`}
+                      >
+                        {classIds.includes(cls.id) && <Check className="w-3.5 h-3.5" />}
+                        <span>{cls.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* SMA / SMK */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1.5">
+                  <span className="text-[10px] font-extrabold text-[#727782] uppercase w-20 shrink-0">
+                    SMA / SMK:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {CLASSES_DATA.filter((c) => c.educationLevelId === "sma").map((cls) => (
+                      <button
+                        key={cls.id}
+                        type="button"
+                        onClick={() => toggleArrayItem(classIds, setClassIds, cls.id)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 ${
+                          classIds.includes(cls.id)
+                            ? "bg-[#167D78] text-white border-[#167D78] shadow-xs"
+                            : "bg-white text-[#20252D] border-[#14213D]/15 hover:bg-gray-50"
+                        }`}
+                      >
+                        {classIds.includes(cls.id) && <Check className="w-3.5 h-3.5" />}
+                        <span>{cls.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* PAUD & Umum */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1.5">
+                  <span className="text-[10px] font-extrabold text-[#727782] uppercase w-20 shrink-0">
+                    Lainnya:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {CLASSES_DATA.filter((c) => ["paud", "umum"].includes(c.educationLevelId)).map((cls) => (
+                      <button
+                        key={cls.id}
+                        type="button"
+                        onClick={() => toggleArrayItem(classIds, setClassIds, cls.id)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 ${
+                          classIds.includes(cls.id)
+                            ? "bg-[#167D78] text-white border-[#167D78] shadow-xs"
+                            : "bg-white text-[#20252D] border-[#14213D]/15 hover:bg-gray-50"
+                        }`}
+                      >
+                        {classIds.includes(cls.id) && <Check className="w-3.5 h-3.5" />}
+                        <span>{cls.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 

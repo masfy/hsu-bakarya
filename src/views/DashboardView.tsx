@@ -252,27 +252,25 @@ export function DashboardView({
                     Lihat
                   </button>
 
-                  {role === "contributor" && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => onEditWork(work)}
-                        className="px-3.5 py-2 rounded-xl bg-[#14213D] hover:bg-[#167D78] transition-colors text-white text-xs font-bold flex items-center gap-1.5"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                        Edit
-                      </button>
-                      {(work.status === "draft" || work.status === "revision_requested") && (
-                        <button
-                          type="button"
-                          onClick={() => onQuickSubmitReview(work.id)}
-                          className="px-3.5 py-2 rounded-xl bg-[#167D78] hover:bg-[#14213D] transition-colors text-white text-xs font-bold flex items-center gap-1.5 shadow-sm"
-                        >
-                          <Send className="w-3.5 h-3.5" />
-                          Ajukan Kurasi
-                        </button>
-                      )}
-                    </>
+                  <button
+                    type="button"
+                    onClick={() => onEditWork(work)}
+                    className="px-3.5 py-2 rounded-xl bg-[#14213D] hover:bg-[#167D78] transition-colors text-white text-xs font-bold flex items-center gap-1.5 shadow-sm"
+                    title="Edit Karya & Perbarui Link"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Edit</span>
+                  </button>
+
+                  {role === "contributor" && (work.status === "draft" || work.status === "revision_requested") && (
+                    <button
+                      type="button"
+                      onClick={() => onQuickSubmitReview(work.id)}
+                      className="px-3.5 py-2 rounded-xl bg-[#167D78] hover:bg-[#14213D] transition-colors text-white text-xs font-bold flex items-center gap-1.5 shadow-sm"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Ajukan Kurasi</span>
+                    </button>
                   )}
 
                   {(role === "admin" || role === "superAdmin") && (

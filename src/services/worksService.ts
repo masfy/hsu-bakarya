@@ -19,14 +19,13 @@ const MODERATION_LOGS_COLLECTION = "moderationLogs";
 export async function fetchWorksFromFirestore(): Promise<Work[] | null> {
   if (!isFirebaseConfigured || !db) return null;
   try {
-    const q = query(
-      collection(db, WORKS_COLLECTION),
-      where("isDeleted", "==", false)
-    );
-    const snapshot = await getDocs(q);
+    const snapshot = await getDocs(collection(db, WORKS_COLLECTION));
     const list: Work[] = [];
     snapshot.forEach((d) => {
-      list.push({ id: d.id, ...d.data() } as Work);
+      const data = d.data();
+      if (!data.isDeleted) {
+        list.push({ id: d.id, ...data } as Work);
+      }
     });
     return list;
   } catch (error) {

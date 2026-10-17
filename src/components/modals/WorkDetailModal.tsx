@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { X, Share2, ExternalLink } from "lucide-react";
+import { X, Share2, ExternalLink, Edit3 } from "lucide-react";
 import { Work } from "../../types";
 import { StatusBadge } from "../common/StatusBadge";
 import {
@@ -13,6 +13,8 @@ interface WorkDetailModalProps {
   onClose: () => void;
   onShare: (work: Work) => void;
   onOutboundClick: (work: Work) => void;
+  onEdit?: (work: Work) => void;
+  canEdit?: boolean;
 }
 
 export function WorkDetailModal({
@@ -20,6 +22,8 @@ export function WorkDetailModal({
   onClose,
   onShare,
   onOutboundClick,
+  onEdit,
+  canEdit = false,
 }: WorkDetailModalProps) {
   if (!work) return null;
 
@@ -84,6 +88,17 @@ export function WorkDetailModal({
           <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-[#14213D]/10">
             <span className="text-xs text-[#727782]">Tautan media pembelajaran tervalidasi aman.</span>
             <div className="flex items-center gap-2.5">
+              {canEdit && onEdit && (
+                <button
+                  type="button"
+                  onClick={() => onEdit(work)}
+                  className="px-4 py-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors shadow-sm"
+                  title="Edit Karya & Tautan Media"
+                >
+                  <Edit3 className="w-4 h-4 text-amber-700" />
+                  <span>Edit Karya</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => onShare(work)}

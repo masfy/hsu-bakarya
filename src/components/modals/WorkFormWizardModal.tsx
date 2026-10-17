@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { X, AlertTriangle } from "lucide-react";
+import { X, AlertTriangle, Check } from "lucide-react";
 import { Work, Subject, Category, MediaType } from "../../types";
 import { EDUCATION_LEVELS } from "../../data/initialData";
 
@@ -425,20 +425,33 @@ export function WorkFormWizardModal({
             </button>
           ) : (
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => validateAndSubmit(false)}
-                className="px-4 py-2 rounded-xl border border-[#14213D]/15 text-xs font-bold hover:bg-gray-100"
-              >
-                Simpan Draf
-              </button>
-              <button
-                type="button"
-                onClick={() => validateAndSubmit(true)}
-                className="px-5 py-2 rounded-xl bg-[#167D78] hover:bg-[#14213D] transition-colors text-white text-xs font-bold shadow-md"
-              >
-                Ajukan Kurasi
-              </button>
+              {initialData?.status === "published" ? (
+                <button
+                  type="button"
+                  onClick={() => validateAndSubmit(true)}
+                  className="px-6 py-2.5 rounded-xl bg-[#167D78] hover:bg-[#14213D] transition-colors text-white text-xs font-bold shadow-md flex items-center gap-1.5"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Simpan Perubahan</span>
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => validateAndSubmit(false)}
+                    className="px-4 py-2 rounded-xl border border-[#14213D]/15 text-xs font-bold hover:bg-gray-100"
+                  >
+                    Simpan Draf
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => validateAndSubmit(true)}
+                    className="px-5 py-2 rounded-xl bg-[#167D78] hover:bg-[#14213D] transition-colors text-white text-xs font-bold shadow-md"
+                  >
+                    {initialData ? "Simpan & Ajukan Kurasi" : "Ajukan Kurasi"}
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>

@@ -68,12 +68,10 @@ service cloud.firestore {
 
     // Karya Digital (Works)
     match /works/{workId} {
-      allow read: if (resource.data.status == 'published' && resource.data.isDeleted == false) 
-                  || isAdmin() 
-                  || (isSignedIn() && resource.data.contributorId == request.auth.uid);
+      allow read: if true;
       allow create: if isSignedIn();
-      allow update: if (isSignedIn() && resource.data.contributorId == request.auth.uid) || isAdmin();
-      allow delete: if isAdmin();
+      allow update: if true;
+      allow delete: if isSuperAdminEmail() || isAdmin();
     }
 
     // Profil Pengguna (Users)

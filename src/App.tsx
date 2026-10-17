@@ -936,6 +936,16 @@ export default function App() {
             onClose={() => setSelectedWork(null)}
             onShare={(w) => setShareModalWork(w)}
             onOutboundClick={handleOutboundClick}
+            canEdit={
+              role === "admin" ||
+              role === "superAdmin" ||
+              (role !== "public" && currentUserProfile?.uid === selectedWork.contributorId)
+            }
+            onEdit={(w) => {
+              setSelectedWork(null);
+              setEditingWork(w);
+              setIsFormModalOpen(true);
+            }}
           />
         )}
       </AnimatePresence>
@@ -981,18 +991,30 @@ export default function App() {
                 : BAKARYA_DEFAULT_THUMBNAIL_URL;
 
               if (editingWork) {
+                const isAlreadyPublished = editingWork.status === "published";
                 const updated: Work = {
                   ...editingWork,
                   ...payload,
                   thumbnailURL: resolvedThumb,
-                  status: submitForReview ? "pending_review" : "draft",
+                  status: isAlreadyPublished
+                    ? "published"
+                    : submitForReview
+                    ? "pending_review"
+                    : "draft",
                   updatedAt: nowWITA,
                   submittedAt: submitForReview ? nowWITA : editingWork.submittedAt,
                 } as Work;
 
                 setWorks((prev) => prev.map((w) => (w.id === editingWork.id ? updated : w)));
                 if (isFirebaseConfigured) saveWorkToFirestore(updated);
-                triggerToast(submitForReview ? "Karya diajukan ke Admin Kurator!" : "Draf disimpan.", "success");
+                triggerToast(
+                  isAlreadyPublished
+                    ? "Perubahan karya & tautan media berhasil disimpan!"
+                    : submitForReview
+                    ? "Karya diajukan ke Admin Kurator!"
+                    : "Draf disimpan.",
+                  "success"
+                );
               } else {
                 const newWork: Work = {
                   id: "work-" + Date.now(),

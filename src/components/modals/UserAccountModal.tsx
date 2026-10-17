@@ -31,6 +31,20 @@ export function UserAccountModal({
   );
   const [error, setError] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    if (initialData) {
+      setDisplayName(initialData.displayName || "");
+      setEmail(initialData.email || "");
+      setUsername(initialData.username || "");
+      setTempPassword(initialData.tempPassword || "Bakarya#2026");
+      setInstitution(initialData.institution || "");
+      setDistrict(initialData.district || "Kec. Amuntai Tengah, HSU");
+      setAvatar(initialData.avatar || PRESET_AVATARS[0]);
+      setUserRole(initialData.role || "contributor");
+      setAccountStatus(initialData.accountStatus || "active");
+    }
+  }, [initialData]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!displayName || !email || !username) {

@@ -1131,20 +1131,38 @@ export default function App() {
       <AnimatePresence>
         {isUserModalOpen && (
           <UserAccountModal
+            key={editingUser ? editingUser.uid : "new-user-modal"}
             initialData={editingUser}
             currentRole={role}
             onClose={() => setIsUserModalOpen(false)}
-            onSave={(userData) => {
-              const nowWITA = "16 Okt 2026, 09:00 WITA";
+            onSave={async (userData) => {
+              const nowWITA = new Date().toLocaleString("id-ID", { timeZone: "Asia/Makassar" }) + " WITA";
               if (editingUser) {
-                const updated = { ...editingUser, ...userData, updatedAt: nowWITA } as UserAccount;
+                const updatedDistrict = (userData.district || "").trim() || editingUser.district || "Kec. Amuntai Tengah, HSU";
+                const updated = {
+                  ...editingUser,
+                  ...userData,
+                  district: updatedDistrict,
+                  updatedAt: nowWITA,
+                } as UserAccount;
+
+                // Update local state immediately
                 setUsersList((prev) => prev.map((u) => (u.uid === editingUser.uid ? updated : u)));
-                if (isFirebaseConfigured) saveUserToFirestore(updated);
-                triggerToast(`Akun ${userData.displayName} berhasil diperbarui!`, "success");
+
+                // Persist to Cloud Firestore
+                if (isFirebaseConfigured) {
+                  const saved = await saveUserToFirestore(updated);
+                  if (!saved) {
+                    triggerToast("Peringatan: Gagal menyimpan ke Firestore. Pastikan Firestore Rules telah di-Publish.", "error");
+                  }
+                }
+                triggerToast(`Akun ${userData.displayName} berhasil diperbarui (${updatedDistrict})!`, "success");
               } else {
+                const newDistrict = (userData.district || "").trim() || "Kec. Amuntai Tengah, HSU";
                 const newUser: UserAccount = {
                   uid: "uid-user-" + Date.now(),
                   ...userData,
+                  district: newDistrict,
                   avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
                   publicProfileEnabled: true,
                   isDeleted: false,
@@ -1154,8 +1172,10 @@ export default function App() {
                 } as UserAccount;
 
                 setUsersList((prev) => [newUser, ...prev]);
-                if (isFirebaseConfigured) saveUserToFirestore(newUser);
-                triggerToast(`Akun ${userData.displayName} berhasil ditambahkan!`, "success");
+                if (isFirebaseConfigured) {
+                  await saveUserToFirestore(newUser);
+                }
+                triggerToast(`Akun ${userData.displayName} berhasil ditambahkan (${newDistrict})!`, "success");
               }
               setIsUserModalOpen(false);
             }}
@@ -1166,16 +1186,27 @@ export default function App() {
       <AnimatePresence>
         {isSelfProfileModalOpen && currentUserProfile && (
           <SelfProfileModal
+            key={currentUserProfile.uid}
             user={currentUserProfile}
             onClose={() => setIsSelfProfileModalOpen(false)}
-            onSave={(updatedFields) => {
-              const updated = { ...currentUserProfile, ...updatedFields };
+            onSave={async (updatedFields) => {
+              const updatedDistrict = (updatedFields.district || "").trim() || currentUserProfile.district || "Kec. Amuntai Tengah, HSU";
+              const updated = {
+                ...currentUserProfile,
+                ...updatedFields,
+                district: updatedDistrict,
+              };
               setUsersList((prev) =>
                 prev.map((u) => (u.uid === currentUserProfile.uid ? updated : u))
               );
-              if (isFirebaseConfigured) saveUserToFirestore(updated);
+              if (isFirebaseConfigured) {
+                const saved = await saveUserToFirestore(updated);
+                if (!saved) {
+                  triggerToast("Peringatan: Gagal menyimpan profil ke Firestore. Pastikan Firestore Rules telah di-Publish.", "error");
+                }
+              }
               setIsSelfProfileModalOpen(false);
-              triggerToast("Profil dan foto Anda berhasil diperbarui!", "success");
+              triggerToast(`Profil dan foto Anda berhasil diperbarui (${updatedDistrict})!`, "success");
             }}
           />
         )}

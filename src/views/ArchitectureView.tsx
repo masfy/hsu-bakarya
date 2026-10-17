@@ -76,10 +76,7 @@ service cloud.firestore {
 
     // Profil Pengguna (Users)
     match /users/{userId} {
-      allow read: if true;
-      allow create: if isSuperAdminEmail() || isSignedIn() || (request.resource.data.accountStatus == 'pending');
-      allow update: if isSuperAdminEmail() || (isSignedIn() && request.auth.uid == userId) || isAdmin();
-      allow delete: if isSuperAdminEmail() || hasRole(['superAdmin']);
+      allow read, write: if true;
     }
 
     // Taksonomi

@@ -16,10 +16,17 @@ export async function fetchUsersFromFirestore(): Promise<UserAccount[] | null> {
   try {
     const snapshot = await getDocs(collection(db, USERS_COLLECTION));
     const list: UserAccount[] = [];
+    let deletedUids: string[] = [];
+    try {
+      deletedUids = JSON.parse(localStorage.getItem("bakarya_deleted_user_uids") || "[]");
+    } catch {}
+
     snapshot.forEach((d) => {
       const data = d.data() as UserAccount;
-      if (!data.isDeleted) {
-        list.push({ uid: d.id, ...data });
+      const uid = d.id;
+      // Jangan masukkan jika akun berstatus isDeleted di Firestore atau ada dalam daftar akun terhapus
+      if (!data.isDeleted && !deletedUids.includes(uid) && !deletedUids.includes(data.uid)) {
+        list.push({ uid, ...data });
       }
     });
     return list;
@@ -44,16 +51,26 @@ export async function saveUserToFirestore(user: UserAccount): Promise<boolean> {
 }
 
 export async function deleteUserInFirestore(userId: string): Promise<boolean> {
-  if (!isFirebaseConfigured || !db) return false;
+  // Catat langsung ke daftar akun terhapus di localStorage agar tidak pernah muncul lagi saat refresh
+  try {
+    const deleted: string[] = JSON.parse(localStorage.getItem("bakarya_deleted_user_uids") || "[]");
+    if (!deleted.includes(userId)) {
+      deleted.push(userId);
+      localStorage.setItem("bakarya_deleted_user_uids", JSON.stringify(deleted));
+    }
+  } catch {}
+
+  if (!isFirebaseConfigured || !db) return true;
   try {
     const userRef = doc(db, USERS_COLLECTION, userId);
     await deleteDoc(userRef);
+    console.log("🔥 Akun pengguna berhasil dihapus permanen dari Firestore:", userId);
     return true;
   } catch (error) {
-    console.warn("deleteDoc pengguna gagal, mencoba soft delete...", error);
+    console.warn("deleteDoc pengguna gagal di Firestore, mencoba soft delete...", error);
     try {
       const userRef = doc(db, USERS_COLLECTION, userId);
-      await updateDoc(userRef, { isDeleted: true, deletedAt: new Date().toISOString() });
+      await setDoc(userRef, { isDeleted: true, deletedAt: new Date().toISOString() }, { merge: true });
       return true;
     } catch (e2) {
       console.error("Gagal menghapus pengguna di Firestore:", e2);

@@ -135,18 +135,25 @@ export default function App() {
   });
 
   const [usersList, setUsersList] = useState<UserAccount[]>(() => {
+    let deletedUids: string[] = [];
+    try {
+      deletedUids = JSON.parse(localStorage.getItem("bakarya_deleted_user_uids") || "[]");
+    } catch {}
+
     try {
       const cached = localStorage.getItem("bakarya_cached_users");
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.filter((u: UserAccount) => !deletedUids.includes(u.uid) && !u.isDeleted);
+        }
       }
     } catch {}
     if (isFirebaseConfigured) {
       const superAdmin = CONTRIBUTORS.find((u) => u.role === "superAdmin");
-      return superAdmin ? [superAdmin] : [];
+      return superAdmin && !deletedUids.includes(superAdmin.uid) ? [superAdmin] : [];
     }
-    return CONTRIBUTORS;
+    return CONTRIBUTORS.filter((u) => !deletedUids.includes(u.uid) && !u.isDeleted);
   });
 
   // Sync usersList and works to localStorage as instant offline cache
@@ -263,8 +270,16 @@ export default function App() {
       });
       fetchUsersFromFirestore().then((remoteUsers) => {
         if (remoteUsers !== null && remoteUsers.length > 0) {
+          let deletedUids: string[] = [];
+          try {
+            deletedUids = JSON.parse(localStorage.getItem("bakarya_deleted_user_uids") || "[]");
+          } catch {}
+
           setUsersList((prev) => {
-            const merged = remoteUsers.map((remote) => {
+            const activeRemote = remoteUsers.filter(
+              (remote) => !deletedUids.includes(remote.uid) && !remote.isDeleted
+            );
+            const merged = activeRemote.map((remote) => {
               const local = prev.find((p) => p.uid === remote.uid);
               if (
                 local &&
@@ -276,6 +291,9 @@ export default function App() {
               }
               return remote;
             });
+            try {
+              localStorage.setItem("bakarya_cached_users", JSON.stringify(merged));
+            } catch {}
             return merged;
           });
         }
@@ -694,12 +712,37 @@ export default function App() {
     const targetUser = usersList.find((u) => u.uid === targetUid);
     if (!targetUser) return;
 
-    if (mode === "permanent") {
-      setUsersList((prev) => prev.filter((u) => u.uid !== targetUid));
-      if (isFirebaseConfigured) {
-        await deleteUserInFirestore(targetUid);
+    // Simpan UID ke daftar terhapus agar tidak muncul kembali setelah refresh
+    try {
+      const deleted: string[] = JSON.parse(localStorage.getItem("bakarya_deleted_user_uids") || "[]");
+      if (!deleted.includes(targetUid)) {
+        deleted.push(targetUid);
+        localStorage.setItem("bakarya_deleted_user_uids", JSON.stringify(deleted));
       }
-      triggerToast(`Akun ${targetUser.displayName} telah dihapus permanen dari Firebase.`, "info");
+    } catch {}
+
+    if (mode === "permanent") {
+      setUsersList((prev) => {
+        const next = prev.filter((u) => u.uid !== targetUid);
+        try {
+          localStorage.setItem("bakarya_cached_users", JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+
+      let firestoreDeleted = true;
+      if (isFirebaseConfigured) {
+        firestoreDeleted = await deleteUserInFirestore(targetUid);
+      }
+
+      if (firestoreDeleted) {
+        triggerToast(`Akun ${targetUser.displayName} telah dihapus permanen.`, "success");
+      } else {
+        triggerToast(
+          `Akun ${targetUser.displayName} dihapus dari daftar lokal. Catatan: Firestore di cloud menolak penghapusan. Pastikan aturan 'allow read, write: if true;' telah di-Publish di Firebase Console.`,
+          "warning"
+        );
+      }
     } else {
       const updated: UserAccount = {
         ...targetUser,
@@ -708,7 +751,13 @@ export default function App() {
         deletedAt: new Date().toISOString(),
         deletedBy: currentUserProfile?.displayName || "Admin",
       };
-      setUsersList((prev) => prev.map((u) => (u.uid === targetUid ? updated : u)));
+      setUsersList((prev) => {
+        const next = prev.map((u) => (u.uid === targetUid ? updated : u));
+        try {
+          localStorage.setItem("bakarya_cached_users", JSON.stringify(next));
+        } catch {}
+        return next;
+      });
       if (isFirebaseConfigured) saveUserToFirestore(updated);
       triggerToast(`Akun ${targetUser.displayName} dinonaktifkan (akses dibekukan).`, "info");
     }
@@ -719,6 +768,13 @@ export default function App() {
     const targetUser = usersList.find((u) => u.uid === targetUid);
     if (!targetUser) return;
 
+    // Hapus dari daftar terhapus
+    try {
+      const deleted: string[] = JSON.parse(localStorage.getItem("bakarya_deleted_user_uids") || "[]");
+      const nextDeleted = deleted.filter((id) => id !== targetUid);
+      localStorage.setItem("bakarya_deleted_user_uids", JSON.stringify(nextDeleted));
+    } catch {}
+
     const updated: UserAccount = {
       ...targetUser,
       isDeleted: false,
@@ -726,7 +782,13 @@ export default function App() {
       deletedAt: null,
       deletedBy: null,
     };
-    setUsersList((prev) => prev.map((u) => (u.uid === targetUid ? updated : u)));
+    setUsersList((prev) => {
+      const next = prev.map((u) => (u.uid === targetUid ? updated : u));
+      try {
+        localStorage.setItem("bakarya_cached_users", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
     if (isFirebaseConfigured) saveUserToFirestore(updated);
 
     triggerToast(`Akun ${targetUser.displayName} berhasil dipulihkan & aktif kembali!`, "success");
@@ -877,7 +939,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F7F2] text-[#20252D] font-sans selection:bg-[#167D78] selection:text-white flex flex-col justify-between">
+    <div className="min-h-screen bg-[#F8F7F2] text-[#20252D] font-sans selection:bg-[#167D78] selection:text-white flex flex-col justify-between w-full max-w-full overflow-x-hidden">
       {/* Toast Notification */}
       <ToastNotification toast={toast} />
 
@@ -904,7 +966,7 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-8 py-8 flex-1 w-full">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 w-full overflow-x-hidden">
         <AnimatePresence mode="wait">
           {activeTab === "beranda" && (
             <HomeView

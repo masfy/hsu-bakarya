@@ -206,7 +206,7 @@ export function HomeView({
                 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight leading-[1.18]"
               >
                 Dari Banua,{" "}
-                <span className="inline-block relative min-w-[260px] sm:min-w-[340px]">
+                <span className="block sm:inline-block relative min-w-0 sm:min-w-[340px]">
                   <AnimatePresence mode="wait">
                     <motion.span
                       key={heroPhraseIdx}
@@ -220,7 +220,7 @@ export function HomeView({
                     </motion.span>
                   </AnimatePresence>
                 </span>
-                <br />
+                <br className="hidden sm:inline" />
                 <span className="bg-gradient-to-r from-white via-white to-[#F2B84B] bg-clip-text text-transparent">
                   Berdampak untuk Semua.
                 </span>

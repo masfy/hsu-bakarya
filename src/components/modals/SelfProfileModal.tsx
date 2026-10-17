@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { X, Upload, Link as LinkIcon, Sparkles, AlertTriangle, Check } from "lucide-react";
+import { X, Upload, Link as LinkIcon, Sparkles, AlertTriangle, Check, ChevronDown } from "lucide-react";
 import { UserAccount } from "../../types";
-import { PRESET_AVATARS } from "../../data/initialData";
+import { PRESET_AVATARS, HSU_DISTRICTS } from "../../data/initialData";
 import { getDriveDirectImageUrl } from "../../utils/drive";
 
 interface SelfProfileModalProps {
@@ -54,9 +54,15 @@ function compressImageFile(file: File, maxSize: number = 160, quality: number = 
 }
 
 export function SelfProfileModal({ user, onClose, onSave }: SelfProfileModalProps) {
+  const normalizeDistrict = (d?: string) => {
+    if (!d) return "Amuntai Tengah";
+    const found = HSU_DISTRICTS.find((k) => d.toLowerCase().includes(k.toLowerCase()));
+    return found || "Amuntai Tengah";
+  };
+
   const [displayName, setDisplayName] = useState(user.displayName || "");
   const [institution, setInstitution] = useState(user.institution || "");
-  const [district, setDistrict] = useState(user.district || "Kec. Amuntai Tengah, HSU");
+  const [district, setDistrict] = useState<string>(normalizeDistrict(user.district));
   const [bio, setBio] = useState(user.bio || "");
   const [avatar, setAvatar] = useState(user.avatar || PRESET_AVATARS[0]);
   const [photoTab, setPhotoTab] = useState<"link" | "preset" | "upload">("link");
@@ -340,27 +346,22 @@ export function SelfProfileModal({ user, onClose, onSave }: SelfProfileModalProp
             <label className="block text-xs font-bold uppercase mb-1 text-[#14213D]">
               Kecamatan / Wilayah Tugas *
             </label>
-            <input
-              type="text"
-              list="profile-district-list"
-              value={district}
-              onChange={(e) => setDistrict(e.target.value)}
-              placeholder="Pilih atau ketik nama kecamatan (contoh: Kec. Amuntai Tengah)..."
-              className="w-full px-3.5 py-2 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs outline-none focus:border-[#167D78]"
-            />
-            <datalist id="profile-district-list">
-              <option value="Kec. Amuntai Tengah, HSU" />
-              <option value="Kec. Amuntai Selatan, HSU" />
-              <option value="Kec. Amuntai Utara, HSU" />
-              <option value="Kec. Banjang, HSU" />
-              <option value="Kec. Babirik, HSU" />
-              <option value="Kec. Danau Panggang, HSU" />
-              <option value="Kec. Haur Gading, HSU" />
-              <option value="Kec. Paminggir, HSU" />
-              <option value="Kec. Sungai Pandan, HSU" />
-              <option value="Kec. Sungai Tabukan, HSU" />
-              <option value="Gugus 2 HSU" />
-            </datalist>
+            <div className="relative">
+              <select
+                value={district}
+                onChange={(e) => setDistrict(e.target.value)}
+                className="w-full px-3.5 py-2 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs font-bold text-[#14213D] outline-none focus:border-[#167D78] focus:ring-1 focus:ring-[#167D78] cursor-pointer appearance-none pr-9"
+              >
+                {HSU_DISTRICTS.map((kec) => (
+                  <option key={kec} value={kec}>
+                    {kec}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#727782]">
+                <ChevronDown className="w-4 h-4" />
+              </div>
+            </div>
           </div>
 
           <div>

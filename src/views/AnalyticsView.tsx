@@ -51,6 +51,7 @@ export function AnalyticsView({
   categoriesList = [],
   subjectsList = [],
   mediaTypesList = [],
+  dailyStats = [],
   onOpenWorkDetail,
 }: AnalyticsViewProps) {
   const [chartMetric, setChartMetric] = useState<"views" | "clicks">("views");
@@ -125,21 +126,17 @@ export function AnalyticsView({
       .slice(0, 5);
   }, [activeWorks]);
 
-  // Distribusi Aktivitas 7 Hari Terakhir disinkronkan dengan total views & clicks aktual
+  // Distribusi Aktivitas 7 Hari Terakhir dari data harian nyata (Real Data)
   const dynamicWeeklyData = useMemo(() => {
-    const dayNames = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
-    const weights = [0.11, 0.14, 0.18, 0.16, 0.15, 0.13, 0.13];
-
-    return dayNames.map((day, idx) => {
-      const v = Math.round(totalViews * weights[idx]);
-      const c = Math.round(totalClicks * weights[idx]);
-      return {
-        hari: day,
-        kunjungan: v,
-        klikMedia: c,
-      };
-    });
-  }, [totalViews, totalClicks]);
+    if (dailyStats && dailyStats.length > 0) {
+      return dailyStats.slice(-7).map((d) => ({
+        hari: d.dateKey,
+        kunjungan: d.visits || d.pageViews || 0,
+        klikMedia: d.outboundClicks || 0,
+      }));
+    }
+    return [];
+  }, [dailyStats]);
 
   return (
     <motion.div

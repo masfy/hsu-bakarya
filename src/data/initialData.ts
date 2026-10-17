@@ -26,6 +26,22 @@ export const HERO_ANIMATED_PHRASES = [
   "Memajukan Banua",
 ];
 
+// Daftar 10 Kecamatan Resmi Kabupaten Hulu Sungai Utara (HSU)
+export const HSU_DISTRICTS = [
+  "Amuntai Tengah",
+  "Amuntai Selatan",
+  "Amuntai Utara",
+  "Banjang",
+  "Haur Gading",
+  "Sungai Pandan",
+  "Sungai Tabukan",
+  "Babirik",
+  "Danau Panggang",
+  "Paminggir",
+] as const;
+
+export type HSUDistrict = (typeof HSU_DISTRICTS)[number];
+
 export const EDUCATION_LEVELS: EducationLevel[] = [
   { id: "paud", name: "PAUD", slug: "paud", sortOrder: 1, isActive: true },
   { id: "sd", name: "SD/MI", slug: "sd-mi", sortOrder: 2, isActive: true },
@@ -122,7 +138,7 @@ export const CONTRIBUTORS: UserAccount[] = [
     displayName: "Siti Rahmah, S.Pd.",
     email: "siti.rahmah@guru.sd.belajar.id",
     institution: "SDN Paliwara 1 Amuntai",
-    district: "Kec. Amuntai Tengah, HSU",
+    district: "Amuntai Tengah",
     bio: "Pendidik kelas atas yang antusias mengembangkan game numerasi berbasis ekosistem rawa lebak dan kearifan lokal Kalimantan Selatan.",
     role: "contributor",
     accountStatus: "active",
@@ -140,7 +156,7 @@ export const CONTRIBUTORS: UserAccount[] = [
     displayName: "Ahmad Fauzan, M.Pd.",
     email: "ahmad.fauzan@guru.smp.belajar.id",
     institution: "SMPN 1 Amuntai",
-    district: "Amuntai Tengah, HSU",
+    district: "Amuntai Tengah",
     bio: "Pendidik sains dan pengembang tur interaktif 360° cagar budaya situs sejarah Kerajaan Negara Dipa & Candi Agung.",
     role: "contributor",
     accountStatus: "active",
@@ -158,7 +174,7 @@ export const CONTRIBUTORS: UserAccount[] = [
     displayName: "Norhalimah, S.Pd., Gr.",
     email: "norhalimah@guru.sma.belajar.id",
     institution: "SMAN 1 Amuntai",
-    district: "Amuntai Tengah, HSU",
+    district: "Amuntai Tengah",
     bio: "Guru biologi dan kriya ramah lingkungan berbasis kearifan lokal anyaman purun lahan basah Hulu Sungai Utara.",
     role: "contributor",
     accountStatus: "active",
@@ -176,7 +192,7 @@ export const CONTRIBUTORS: UserAccount[] = [
     displayName: "Muhammad Rizki, S.Pd.",
     email: "m.rizki.gugus2@guru.sd.belajar.id",
     institution: "SDN Murung Sari 2 Amuntai",
-    district: "Kec. Amuntai Tengah, HSU",
+    district: "Amuntai Tengah",
     bio: "Peserta Kelas Digitalisasi Gugus 2 HSU yang mengembangkan media interaktif muatan lokal Kalimantan Selatan.",
     role: "contributor",
     accountStatus: "pending",
@@ -194,7 +210,7 @@ export const CONTRIBUTORS: UserAccount[] = [
     displayName: "H. Hendra Wijaya, M.Pd.",
     email: "kurator.bakarya@disdik.hsu.go.id",
     institution: "Dinas Pendidikan Kab. HSU",
-    district: "Amuntai Tengah, HSU",
+    district: "Amuntai Tengah",
     bio: "Tim Kurator dan Moderator Media Pembelajaran Digital Kabupaten Hulu Sungai Utara.",
     role: "admin",
     accountStatus: "active",
@@ -212,7 +228,7 @@ export const CONTRIBUTORS: UserAccount[] = [
     displayName: "Alfyar Naim",
     email: "alfyarnaim@gmail.com",
     institution: "Fasilitator Digitalisasi",
-    district: "Gugus 2 HSU",
+    district: "Amuntai Tengah",
     bio: "Fasilitator Digitalisasi & Super Admin Pengelola Utama Portal Pembelajaran Digital BAKARYA Gugus 2 HSU.",
     role: "superAdmin",
     accountStatus: "active",

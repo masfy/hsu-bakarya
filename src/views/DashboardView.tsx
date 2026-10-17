@@ -357,7 +357,7 @@ export function DashboardView({
             </h1>
             <p className="text-xs sm:text-sm text-white/75 max-w-2xl">
               {currentUserProfile?.institution || "Kabupaten Hulu Sungai Utara"} •{" "}
-              {currentUserProfile?.district || "Gugus 2 HSU"}
+              {currentUserProfile?.district || "Amuntai Tengah"}
             </p>
           </div>
         </div>

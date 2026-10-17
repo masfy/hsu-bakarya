@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { X, Link as LinkIcon, AlertTriangle } from "lucide-react";
+import { X, Link as LinkIcon, AlertTriangle, ChevronDown } from "lucide-react";
 import { UserAccount, UserRole, AccountStatus } from "../../types";
-import { PRESET_AVATARS } from "../../data/initialData";
+import { PRESET_AVATARS, HSU_DISTRICTS } from "../../data/initialData";
 import { getDriveDirectImageUrl } from "../../utils/drive";
 
 interface UserAccountModalProps {
@@ -18,12 +18,18 @@ export function UserAccountModal({
   onClose,
   onSave,
 }: UserAccountModalProps) {
+  const normalizeDistrict = (d?: string) => {
+    if (!d) return "Amuntai Tengah";
+    const found = HSU_DISTRICTS.find((k) => d.toLowerCase().includes(k.toLowerCase()));
+    return found || "Amuntai Tengah";
+  };
+
   const [displayName, setDisplayName] = useState(initialData?.displayName || "");
   const [email, setEmail] = useState(initialData?.email || "");
   const [username, setUsername] = useState(initialData?.username || "");
   const [tempPassword, setTempPassword] = useState(initialData?.tempPassword || "Bakarya#2026");
   const [institution, setInstitution] = useState(initialData?.institution || "");
-  const [district, setDistrict] = useState(initialData?.district || "Kec. Amuntai Tengah, HSU");
+  const [district, setDistrict] = useState<string>(normalizeDistrict(initialData?.district));
   const [avatar, setAvatar] = useState(initialData?.avatar || PRESET_AVATARS[0]);
   const [userRole, setUserRole] = useState<UserRole>(initialData?.role || "contributor");
   const [accountStatus, setAccountStatus] = useState<AccountStatus>(
@@ -38,7 +44,7 @@ export function UserAccountModal({
       setUsername(initialData.username || "");
       setTempPassword(initialData.tempPassword || "Bakarya#2026");
       setInstitution(initialData.institution || "");
-      setDistrict(initialData.district || "Kec. Amuntai Tengah, HSU");
+      setDistrict(normalizeDistrict(initialData.district));
       setAvatar(initialData.avatar || PRESET_AVATARS[0]);
       setUserRole(initialData.role || "contributor");
       setAccountStatus(initialData.accountStatus || "active");
@@ -182,27 +188,22 @@ export function UserAccountModal({
             <label className="block text-xs font-bold uppercase mb-1 text-[#14213D]">
               Kecamatan / Wilayah Tugas *
             </label>
-            <input
-              type="text"
-              list="user-district-list"
-              value={district}
-              onChange={(e) => setDistrict(e.target.value)}
-              placeholder="Pilih atau ketik nama kecamatan (contoh: Kec. Amuntai Tengah)..."
-              className="w-full px-3.5 py-2 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs outline-none focus:border-[#167D78]"
-            />
-            <datalist id="user-district-list">
-              <option value="Kec. Amuntai Tengah, HSU" />
-              <option value="Kec. Amuntai Selatan, HSU" />
-              <option value="Kec. Amuntai Utara, HSU" />
-              <option value="Kec. Banjang, HSU" />
-              <option value="Kec. Babirik, HSU" />
-              <option value="Kec. Danau Panggang, HSU" />
-              <option value="Kec. Haur Gading, HSU" />
-              <option value="Kec. Paminggir, HSU" />
-              <option value="Kec. Sungai Pandan, HSU" />
-              <option value="Kec. Sungai Tabukan, HSU" />
-              <option value="Gugus 2 HSU" />
-            </datalist>
+            <div className="relative">
+              <select
+                value={district}
+                onChange={(e) => setDistrict(e.target.value)}
+                className="w-full px-3.5 py-2 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs font-bold text-[#14213D] outline-none focus:border-[#167D78] focus:ring-1 focus:ring-[#167D78] cursor-pointer appearance-none pr-9"
+              >
+                {HSU_DISTRICTS.map((kec) => (
+                  <option key={kec} value={kec}>
+                    {kec}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#727782]">
+                <ChevronDown className="w-4 h-4" />
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

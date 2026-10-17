@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { X, AlertTriangle, Eye, EyeOff } from "lucide-react";
+import { X, AlertTriangle, Eye, EyeOff, ChevronDown } from "lucide-react";
 import { UserAccount } from "../../types";
+import { HSU_DISTRICTS } from "../../data/initialData";
 
 interface GoogleAuthModalProps {
   initialMode: "login" | "register";
@@ -29,7 +30,7 @@ export function GoogleAuthModal({
   const [showPassword, setShowPassword] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [institution, setInstitution] = useState("");
-  const [district, setDistrict] = useState("Kec. Amuntai Tengah, HSU");
+  const [district, setDistrict] = useState<string>("Amuntai Tengah");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleFormSubmit = (e: React.FormEvent) => {
@@ -171,27 +172,22 @@ export function GoogleAuthModal({
                 <label className="block text-xs font-extrabold uppercase text-[#14213D] mb-1">
                   Kecamatan / Wilayah Tugas (HSU) *
                 </label>
-                <input
-                  type="text"
-                  list="auth-district-list"
-                  value={district}
-                  onChange={(e) => setDistrict(e.target.value)}
-                  placeholder="Pilih atau ketik nama kecamatan (contoh: Kec. Amuntai Tengah)..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs font-medium outline-none focus:border-[#167D78]"
-                />
-                <datalist id="auth-district-list">
-                  <option value="Kec. Amuntai Tengah, HSU" />
-                  <option value="Kec. Amuntai Selatan, HSU" />
-                  <option value="Kec. Amuntai Utara, HSU" />
-                  <option value="Kec. Banjang, HSU" />
-                  <option value="Kec. Babirik, HSU" />
-                  <option value="Kec. Danau Panggang, HSU" />
-                  <option value="Kec. Haur Gading, HSU" />
-                  <option value="Kec. Paminggir, HSU" />
-                  <option value="Kec. Sungai Pandan, HSU" />
-                  <option value="Kec. Sungai Tabukan, HSU" />
-                  <option value="Gugus 2 HSU" />
-                </datalist>
+                <div className="relative">
+                  <select
+                    value={district}
+                    onChange={(e) => setDistrict(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs font-bold text-[#14213D] outline-none focus:border-[#167D78] focus:ring-1 focus:ring-[#167D78] cursor-pointer appearance-none pr-9"
+                  >
+                    {HSU_DISTRICTS.map((kec) => (
+                      <option key={kec} value={kec}>
+                        {kec}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#727782]">
+                    <ChevronDown className="w-4 h-4" />
+                  </div>
+                </div>
               </div>
             </>
           )}

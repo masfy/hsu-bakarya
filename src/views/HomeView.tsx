@@ -89,7 +89,7 @@ export function HomeView({
   onSelectContributor,
   onOpenAuthModal,
 }: HomeViewProps) {
-  // Perhitungan Statistik Kunjungan & Dampak Pemanfaatan Nyata
+  // Perhitungan Statistik Kunjungan & Dampak Pemanfaatan 100% Nyata (Real Data)
   const publishedWorks = useMemo(
     () => works.filter((w) => w.status === "published" && !w.isDeleted),
     [works]
@@ -113,18 +113,21 @@ export function HomeView({
     [works]
   );
 
+  // Total kunjungan riil: akumulasi sesi kunjungan aktual + interaksi tayangan
   const totalVisits = useMemo(() => {
     const fromDaily = dailyStats.reduce((acc, d) => acc + (d.visits || 0), 0);
-    return Math.max(fromDaily, 885) + totalViews;
+    return fromDaily > 0 ? fromDaily : totalViews;
   }, [dailyStats, totalViews]);
 
+  // Statistik hari ini riil
   const todayStats = useMemo(() => {
     if (dailyStats && dailyStats.length > 0) {
       return dailyStats[dailyStats.length - 1];
     }
-    return { visits: 108, pageViews: 318, outboundClicks: 79 };
-  }, [dailyStats]);
+    return { visits: 0, pageViews: totalViews, outboundClicks: totalClicks };
+  }, [dailyStats, totalViews, totalClicks]);
 
+  // Jumlah instansi / sekolah riil terhubung
   const uniqueInstitutions = useMemo(() => {
     const instSet = new Set<string>();
     usersList.forEach((u) => {
@@ -132,23 +135,20 @@ export function HomeView({
         instSet.add(u.institution.trim());
       }
     });
-    return Math.max(instSet.size, 6);
-  }, [usersList]);
+    works.forEach((w) => {
+      if (!w.isDeleted && w.contributorInstitution && w.contributorInstitution.trim()) {
+        instSet.add(w.contributorInstitution.trim());
+      }
+    });
+    return instSet.size;
+  }, [usersList, works]);
 
-  // Data grafik 7 hari terakhir
+  // Data grafik 7 hari terakhir riil
   const trafficChartData = useMemo(() => {
     if (dailyStats && dailyStats.length > 0) {
       return dailyStats.slice(-7);
     }
-    return [
-      { dateKey: "10 Okt", visits: 82, pageViews: 240, outboundClicks: 51 },
-      { dateKey: "11 Okt", visits: 95, pageViews: 285, outboundClicks: 64 },
-      { dateKey: "12 Okt", visits: 128, pageViews: 390, outboundClicks: 89 },
-      { dateKey: "13 Okt", visits: 114, pageViews: 342, outboundClicks: 76 },
-      { dateKey: "14 Okt", visits: 146, pageViews: 450, outboundClicks: 105 },
-      { dateKey: "15 Okt", visits: 162, pageViews: 512, outboundClicks: 124 },
-      { dateKey: "16 Okt", visits: 108, pageViews: 318, outboundClicks: 79 },
-    ];
+    return [];
   }, [dailyStats]);
 
   return (
@@ -433,12 +433,12 @@ export function HomeView({
             </div>
             <div className="mt-4">
               <div className="font-display text-3xl font-extrabold text-white tracking-tight">
-                {totalVisits.toLocaleString("id-ID")}+
+                {totalVisits.toLocaleString("id-ID")}
               </div>
               <div className="text-xs font-bold text-white/90 mt-0.5">Total Kunjungan Portal</div>
               <div className="text-[11px] text-white/60 mt-1 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                <span>~{todayStats.visits} sesi aktif hari ini</span>
+                <span>{todayStats.visits} sesi aktif hari ini</span>
               </div>
             </div>
           </motion.div>
@@ -458,7 +458,7 @@ export function HomeView({
             </div>
             <div className="mt-4">
               <div className="font-display text-3xl font-extrabold text-white tracking-tight">
-                {totalViews.toLocaleString("id-ID")}+
+                {totalViews.toLocaleString("id-ID")}
               </div>
               <div className="text-xs font-bold text-white/90 mt-0.5">Tayangan Karya & Modul</div>
               <div className="text-[11px] text-white/70 mt-1">
@@ -482,7 +482,7 @@ export function HomeView({
             </div>
             <div className="mt-4">
               <div className="font-display text-3xl font-extrabold text-[#14213D] tracking-tight">
-                {totalClicks.toLocaleString("id-ID")}+
+                {totalClicks.toLocaleString("id-ID")}
               </div>
               <div className="text-xs font-bold text-[#14213D] mt-0.5">Interaksi Buka Media</div>
               <div className="text-[11px] text-[#727782] mt-1">

@@ -52,6 +52,11 @@ import {
   saveUserToFirestore,
   deleteUserInFirestore,
 } from "./services/usersService";
+import {
+  fetchRealDailyAnalytics,
+  recordRealVisit,
+  recordRealOutboundClick,
+} from "./services/analyticsService";
 
 // Layout & Components
 import { Navbar } from "./components/layout/Navbar";
@@ -206,7 +211,16 @@ export default function App() {
   const [selectedContributorFilter, setSelectedContributorFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
 
-  const [dailyStats, setDailyStats] = useState<DailyAnalytics[]>(INITIAL_DAILY_ANALYTICS);
+  const [dailyStats, setDailyStats] = useState<DailyAnalytics[]>(() => {
+    try {
+      const cached = localStorage.getItem("bakarya_real_daily_analytics");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return [];
+  });
   const [monthlyStats] = useState<MonthlyAnalytics[]>(INITIAL_MONTHLY_ANALYTICS);
   const [sessionId, setSessionId] = useState("");
   const [moderationLogs, setModerationLogs] = useState<ModerationLog[]>(() =>
@@ -262,6 +276,12 @@ export default function App() {
   );
 
   const handleRefreshDataFromFirestore = () => {
+    fetchRealDailyAnalytics().then((realStats) => {
+      if (realStats && realStats.length > 0) {
+        setDailyStats(realStats);
+      }
+    });
+
     if (isFirebaseConfigured) {
       fetchWorksFromFirestore().then((remoteWorks) => {
         if (remoteWorks !== null) {
@@ -284,8 +304,8 @@ export default function App() {
               if (
                 local &&
                 local.district &&
-                local.district !== "Kec. Amuntai Tengah, HSU" &&
-                (!remote.district || remote.district === "Kec. Amuntai Tengah, HSU")
+                local.district !== "Amuntai Tengah" &&
+                (!remote.district || remote.district === "Amuntai Tengah")
               ) {
                 return { ...remote, district: local.district };
               }
@@ -370,27 +390,26 @@ export default function App() {
     triggerToast("Anda telah keluar dari sesi akun.", "info");
   };
 
-  // Set Session ID & Increment Daily Traffic
+  // Set Session ID & Record Real Daily Traffic
   useEffect(() => {
     const generated = "sess_wita_" + Math.random().toString(36).substring(2, 9);
     setSessionId(generated);
 
     try {
       const sessionKey = "bakarya_visit_counted_" + new Date().toISOString().slice(0, 10);
-      if (!sessionStorage.getItem(sessionKey)) {
+      const isNewSession = !sessionStorage.getItem(sessionKey);
+      if (isNewSession) {
         sessionStorage.setItem(sessionKey, "1");
-        setDailyStats((prev) => {
-          const updated = [...prev];
-          if (updated.length > 0) {
-            const last = { ...updated[updated.length - 1] };
-            last.visits = (last.visits || 0) + 1;
-            last.pageViews = (last.pageViews || 0) + 1;
-            updated[updated.length - 1] = last;
-          }
-          return updated;
-        });
       }
-    } catch {}
+      recordRealVisit(isNewSession);
+      fetchRealDailyAnalytics().then((realStats) => {
+        if (realStats && realStats.length > 0) {
+          setDailyStats(realStats);
+        }
+      });
+    } catch (e) {
+      console.warn("Real analytics tracking error:", e);
+    }
   }, []);
 
   // Title, Favicon & Hero Phrase Rotation
@@ -869,9 +888,10 @@ export default function App() {
   const handleOutboundClick = (work: Work) => {
     setWorks((prev) =>
       prev.map((w) =>
-        w.id === work.id ? { ...w, outboundClickCount: w.outboundClickCount + 1 } : w
+        w.id === work.id ? { ...w, outboundClickCount: (w.outboundClickCount || 0) + 1 } : w
       )
     );
+    recordRealOutboundClick();
     if (isFirebaseConfigured) {
       incrementWorkClicksInFirestore(work.id);
     }
@@ -1273,7 +1293,7 @@ export default function App() {
             onSave={async (userData) => {
               const nowWITA = new Date().toLocaleString("id-ID", { timeZone: "Asia/Makassar" }) + " WITA";
               if (editingUser) {
-                const updatedDistrict = (userData.district || "").trim() || editingUser.district || "Kec. Amuntai Tengah, HSU";
+                const updatedDistrict = (userData.district || "").trim() || editingUser.district || "Amuntai Tengah";
                 const updated = {
                   ...editingUser,
                   ...userData,
@@ -1293,7 +1313,7 @@ export default function App() {
                 }
                 triggerToast(`Akun ${userData.displayName} berhasil diperbarui (${updatedDistrict})!`, "success");
               } else {
-                const newDistrict = (userData.district || "").trim() || "Kec. Amuntai Tengah, HSU";
+                const newDistrict = (userData.district || "").trim() || "Amuntai Tengah";
                 const newUser: UserAccount = {
                   uid: "uid-user-" + Date.now(),
                   ...userData,
@@ -1325,7 +1345,7 @@ export default function App() {
             user={currentUserProfile}
             onClose={() => setIsSelfProfileModalOpen(false)}
             onSave={async (updatedFields) => {
-              const updatedDistrict = (updatedFields.district || "").trim() || currentUserProfile.district || "Kec. Amuntai Tengah, HSU";
+              const updatedDistrict = (updatedFields.district || "").trim() || currentUserProfile.district || "Amuntai Tengah";
               const updated = {
                 ...currentUserProfile,
                 ...updatedFields,

@@ -23,6 +23,7 @@ export function UserAccountModal({
   const [username, setUsername] = useState(initialData?.username || "");
   const [tempPassword, setTempPassword] = useState(initialData?.tempPassword || "Bakarya#2026");
   const [institution, setInstitution] = useState(initialData?.institution || "");
+  const [district, setDistrict] = useState(initialData?.district || "Kec. Amuntai Tengah, HSU");
   const [avatar, setAvatar] = useState(initialData?.avatar || PRESET_AVATARS[0]);
   const [userRole, setUserRole] = useState<UserRole>(initialData?.role || "contributor");
   const [accountStatus, setAccountStatus] = useState<AccountStatus>(
@@ -42,6 +43,7 @@ export function UserAccountModal({
       username,
       tempPassword,
       institution,
+      district,
       avatar: getDriveDirectImageUrl(avatar, "w400") || avatar,
       role: userRole,
       accountStatus,
@@ -160,6 +162,33 @@ export function UserAccountModal({
               onChange={(e) => setInstitution(e.target.value)}
               className="w-full px-3.5 py-2 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs outline-none focus:border-[#167D78]"
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase mb-1 text-[#14213D]">
+              Kecamatan / Wilayah Tugas *
+            </label>
+            <input
+              type="text"
+              list="user-district-list"
+              value={district}
+              onChange={(e) => setDistrict(e.target.value)}
+              placeholder="Pilih atau ketik nama kecamatan (contoh: Kec. Amuntai Tengah)..."
+              className="w-full px-3.5 py-2 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs outline-none focus:border-[#167D78]"
+            />
+            <datalist id="user-district-list">
+              <option value="Kec. Amuntai Tengah, HSU" />
+              <option value="Kec. Amuntai Selatan, HSU" />
+              <option value="Kec. Amuntai Utara, HSU" />
+              <option value="Kec. Banjang, HSU" />
+              <option value="Kec. Babirik, HSU" />
+              <option value="Kec. Danau Panggang, HSU" />
+              <option value="Kec. Haur Gading, HSU" />
+              <option value="Kec. Paminggir, HSU" />
+              <option value="Kec. Sungai Pandan, HSU" />
+              <option value="Kec. Sungai Tabukan, HSU" />
+              <option value="Gugus 2 HSU" />
+            </datalist>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

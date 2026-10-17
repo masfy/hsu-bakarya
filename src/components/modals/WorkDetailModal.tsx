@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { X, Share2, ExternalLink, Edit3 } from "lucide-react";
+import { X, Share2, ExternalLink, Edit3, Trash2 } from "lucide-react";
 import { Work } from "../../types";
 import { StatusBadge } from "../common/StatusBadge";
 import {
@@ -15,6 +15,8 @@ interface WorkDetailModalProps {
   onOutboundClick: (work: Work) => void;
   onEdit?: (work: Work) => void;
   canEdit?: boolean;
+  onDelete?: (work: Work) => void;
+  canDelete?: boolean;
 }
 
 export function WorkDetailModal({
@@ -24,6 +26,8 @@ export function WorkDetailModal({
   onOutboundClick,
   onEdit,
   canEdit = false,
+  onDelete,
+  canDelete = false,
 }: WorkDetailModalProps) {
   if (!work) return null;
 
@@ -97,6 +101,17 @@ export function WorkDetailModal({
                 >
                   <Edit3 className="w-4 h-4 text-amber-700" />
                   <span>Edit Karya</span>
+                </button>
+              )}
+              {canDelete && onDelete && (
+                <button
+                  type="button"
+                  onClick={() => onDelete(work)}
+                  className="px-4 py-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors shadow-sm"
+                  title="Hapus Karya Pembelajaran"
+                >
+                  <Trash2 className="w-4 h-4 text-rose-600" />
+                  <span>Hapus</span>
                 </button>
               )}
               <button

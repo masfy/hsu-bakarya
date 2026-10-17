@@ -42,6 +42,7 @@ import {
 import {
   fetchWorksFromFirestore,
   saveWorkToFirestore,
+  deleteWorkInFirestore,
   incrementWorkViewsInFirestore,
   incrementWorkClicksInFirestore,
   addModerationLogInFirestore,
@@ -65,6 +66,7 @@ import { UserAccountModal } from "./components/modals/UserAccountModal";
 import { SelfProfileModal } from "./components/modals/SelfProfileModal";
 import { GoogleAuthModal } from "./components/modals/GoogleAuthModal";
 import { ConfirmDeleteModal } from "./components/modals/ConfirmDeleteModal";
+import { ConfirmDeleteWorkModal } from "./components/modals/ConfirmDeleteWorkModal";
 
 // Views
 import { HomeView } from "./views/HomeView";
@@ -115,6 +117,7 @@ export default function App() {
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserAccount | null>(null);
   const [userConfirmDelete, setUserConfirmDelete] = useState<UserAccount | null>(null);
+  const [workConfirmDelete, setWorkConfirmDelete] = useState<Work | null>(null);
   const [isSelfProfileModalOpen, setIsSelfProfileModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<"login" | "register">("login");
@@ -756,6 +759,28 @@ export default function App() {
     triggerToast(`Keputusan moderasi berhasil disimpan (${newStatus.toUpperCase()}).`, "success");
   };
 
+  const handleDeleteWork = async (work: Work) => {
+    if (role !== "admin" && role !== "superAdmin") {
+      triggerToast("Hanya Admin dan Super Admin yang memiliki kewenangan menghapus karya.", "error");
+      return;
+    }
+
+    try {
+      if (isFirebaseConfigured) {
+        await deleteWorkInFirestore(work.id);
+      }
+      setWorks((prev) => prev.filter((w) => w.id !== work.id));
+      if (selectedWork?.id === work.id) {
+        setSelectedWork(null);
+      }
+      setWorkConfirmDelete(null);
+      triggerToast(`Karya "${work.title}" berhasil dihapus dari sistem BAKARYA.`, "success");
+    } catch (err) {
+      console.error("Gagal menghapus karya:", err);
+      triggerToast("Terjadi kendala saat menghapus karya di Firestore.", "error");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F8F7F2] text-[#20252D] font-sans selection:bg-[#167D78] selection:text-white flex flex-col justify-between">
       {/* Toast Notification */}
@@ -872,6 +897,7 @@ export default function App() {
                 setEditingWork(w);
                 setIsFormModalOpen(true);
               }}
+              onDeleteWork={(w) => setWorkConfirmDelete(w)}
               onOpenModerationModal={(w) => setModerationModalWork(w)}
               onQuickSubmitReview={(workId) =>
                 handleModerationDecision(
@@ -945,6 +971,11 @@ export default function App() {
               setSelectedWork(null);
               setEditingWork(w);
               setIsFormModalOpen(true);
+            }}
+            canDelete={role === "admin" || role === "superAdmin"}
+            onDelete={(w) => {
+              setSelectedWork(null);
+              setWorkConfirmDelete(w);
             }}
           />
         )}
@@ -1124,6 +1155,17 @@ export default function App() {
             role={role}
             onClose={() => setUserConfirmDelete(null)}
             onConfirm={handleDeleteUser}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {workConfirmDelete && (
+          <ConfirmDeleteWorkModal
+            work={workConfirmDelete}
+            role={role}
+            onClose={() => setWorkConfirmDelete(null)}
+            onConfirm={handleDeleteWork}
           />
         )}
       </AnimatePresence>

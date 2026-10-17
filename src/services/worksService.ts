@@ -4,6 +4,7 @@ import {
   getDocs,
   setDoc,
   updateDoc,
+  deleteDoc,
   increment,
   query,
   orderBy,
@@ -50,11 +51,18 @@ export async function deleteWorkInFirestore(workId: string): Promise<boolean> {
   if (!isFirebaseConfigured || !db) return false;
   try {
     const workRef = doc(db, WORKS_COLLECTION, workId);
-    await updateDoc(workRef, { isDeleted: true });
+    await deleteDoc(workRef);
     return true;
   } catch (error) {
-    console.error("Gagal menghapus karya di Firestore:", error);
-    return false;
+    console.warn("deleteDoc gagal, mencoba soft delete isDeleted: true...", error);
+    try {
+      const workRef = doc(db, WORKS_COLLECTION, workId);
+      await updateDoc(workRef, { isDeleted: true });
+      return true;
+    } catch (e2) {
+      console.error("Gagal menghapus karya di Firestore:", e2);
+      return false;
+    }
   }
 }
 

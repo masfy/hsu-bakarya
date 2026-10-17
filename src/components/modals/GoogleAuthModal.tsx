@@ -166,6 +166,33 @@ export function GoogleAuthModal({
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs font-medium outline-none focus:border-[#167D78]"
                 />
               </div>
+
+              <div>
+                <label className="block text-xs font-extrabold uppercase text-[#14213D] mb-1">
+                  Kecamatan / Wilayah Tugas (HSU) *
+                </label>
+                <input
+                  type="text"
+                  list="auth-district-list"
+                  value={district}
+                  onChange={(e) => setDistrict(e.target.value)}
+                  placeholder="Pilih atau ketik nama kecamatan (contoh: Kec. Amuntai Tengah)..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs font-medium outline-none focus:border-[#167D78]"
+                />
+                <datalist id="auth-district-list">
+                  <option value="Kec. Amuntai Tengah, HSU" />
+                  <option value="Kec. Amuntai Selatan, HSU" />
+                  <option value="Kec. Amuntai Utara, HSU" />
+                  <option value="Kec. Banjang, HSU" />
+                  <option value="Kec. Babirik, HSU" />
+                  <option value="Kec. Danau Panggang, HSU" />
+                  <option value="Kec. Haur Gading, HSU" />
+                  <option value="Kec. Paminggir, HSU" />
+                  <option value="Kec. Sungai Pandan, HSU" />
+                  <option value="Kec. Sungai Tabukan, HSU" />
+                  <option value="Gugus 2 HSU" />
+                </datalist>
+              </div>
             </>
           )}
 

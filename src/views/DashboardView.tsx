@@ -10,6 +10,7 @@ import {
   MousePointerClick,
   Edit3,
   Send,
+  Trash2,
 } from "lucide-react";
 import { Work, UserAccount, UserRole } from "../types";
 import { StatusBadge } from "../components/common/StatusBadge";
@@ -22,6 +23,7 @@ interface DashboardViewProps {
   onOpenWorkDetail: (w: Work) => void;
   onOpenUploadModal: () => void;
   onEditWork: (w: Work) => void;
+  onDeleteWork?: (w: Work) => void;
   onOpenModerationModal: (w: Work) => void;
   onQuickSubmitReview: (workId: string) => void;
   onOpenSelfProfileModal: () => void;
@@ -35,6 +37,7 @@ export function DashboardView({
   onOpenWorkDetail,
   onOpenUploadModal,
   onEditWork,
+  onDeleteWork,
   onOpenModerationModal,
   onQuickSubmitReview,
   onOpenSelfProfileModal,
@@ -281,6 +284,18 @@ export function DashboardView({
                     >
                       <ShieldCheck className="w-4 h-4" />
                       <span>Moderasi</span>
+                    </button>
+                  )}
+
+                  {(role === "admin" || role === "superAdmin") && onDeleteWork && (
+                    <button
+                      type="button"
+                      onClick={() => onDeleteWork(work)}
+                      className="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors"
+                      title="Hapus Karya Pembelajaran"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                      <span>Hapus</span>
                     </button>
                   )}
                 </div>

@@ -46,6 +46,15 @@ export function GoogleAuthModal({
         setErrorMsg("Nama lengkap dan asal sekolah/instansi wajib diisi saat mendaftar.");
         return;
       }
+      if (!password || password.length < 6) {
+        setErrorMsg("Kata sandi pendaftaran wajib diisi minimal 6 karakter demi keamanan akun.");
+        return;
+      }
+    } else {
+      if (!password) {
+        setErrorMsg("Masukkan kata sandi akun Anda.");
+        return;
+      }
     }
 
     onSubmitAuth({
@@ -175,7 +184,7 @@ export function GoogleAuthModal({
 
           <div>
             <label className="block text-xs font-extrabold uppercase text-[#14213D] mb-1">
-              Kata Sandi (Password)
+              Kata Sandi (Password) *
             </label>
             <div className="relative">
               <input

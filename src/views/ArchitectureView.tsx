@@ -79,9 +79,9 @@ service cloud.firestore {
     // Profil Pengguna (Users)
     match /users/{userId} {
       allow read: if true;
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if (isSignedIn() && request.auth.uid == userId) || isAdmin();
-      allow delete: if hasRole(['superAdmin']);
+      allow create: if isSuperAdminEmail() || isSignedIn() || (request.resource.data.accountStatus == 'pending');
+      allow update: if isSuperAdminEmail() || (isSignedIn() && request.auth.uid == userId) || isAdmin();
+      allow delete: if isSuperAdminEmail() || hasRole(['superAdmin']);
     }
 
     // Taksonomi

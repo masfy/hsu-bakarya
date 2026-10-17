@@ -33,7 +33,12 @@ import {
   BAKARYA_DEFAULT_THUMBNAIL_URL,
 } from "./utils/drive";
 import { auth, isFirebaseConfigured } from "./services/firebase";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut,
+} from "firebase/auth";
 import {
   fetchWorksFromFirestore,
   saveWorkToFirestore,
@@ -72,8 +77,21 @@ import { GuideView } from "./views/GuideView";
 import { ArchitectureView } from "./views/ArchitectureView";
 
 export default function App() {
-  const [role, setRole] = useState<UserRole>("public");
-  const [loggedInUserUid, setLoggedInUserUid] = useState<string | null>(null);
+  const [role, setRole] = useState<UserRole>(() => {
+    try {
+      const saved = localStorage.getItem("bakarya_user_role");
+      return (saved as UserRole) || "public";
+    } catch {
+      return "public";
+    }
+  });
+  const [loggedInUserUid, setLoggedInUserUid] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem("bakarya_user_uid") || null;
+    } catch {
+      return null;
+    }
+  });
   const [activeTab, setActiveTab] = useState("beranda");
 
   const [works, setWorks] = useState<Work[]>(() => (isFirebaseConfigured ? [] : INITIAL_WORKS));
@@ -191,6 +209,70 @@ export default function App() {
   useEffect(() => {
     handleRefreshDataFromFirestore();
   }, []);
+
+  // Listener Firebase Auth agar sesi tidak keluar otomatis
+  useEffect(() => {
+    if (!isFirebaseConfigured || !auth) return;
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const userEmail = firebaseUser.email?.toLowerCase();
+        console.log("🔥 Sesi Firebase Auth terdeteksi aktif:", userEmail);
+
+        let found = usersList.find(
+          (u) => u.uid === firebaseUser.uid || (userEmail && u.email.toLowerCase() === userEmail)
+        );
+
+        if (!found) {
+          const remoteUsers = await fetchUsersFromFirestore();
+          if (remoteUsers) {
+            setUsersList(remoteUsers);
+            found = remoteUsers.find(
+              (u) => u.uid === firebaseUser.uid || (userEmail && u.email.toLowerCase() === userEmail)
+            );
+          }
+        }
+
+        if (found) {
+          if (found.accountStatus === "active") {
+            setLoggedInUserUid(found.uid);
+            setRole(found.role);
+            try {
+              localStorage.setItem("bakarya_user_uid", found.uid);
+              localStorage.setItem("bakarya_user_role", found.role);
+            } catch {}
+          }
+        } else if (userEmail === "alfyarnaim@gmail.com") {
+          setRole("superAdmin");
+          setLoggedInUserUid("uid-super-alfyarnaim");
+          try {
+            localStorage.setItem("bakarya_user_uid", "uid-super-alfyarnaim");
+            localStorage.setItem("bakarya_user_role", "superAdmin");
+          } catch {}
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [usersList]);
+
+  const handleLogout = async () => {
+    if (isFirebaseConfigured && auth) {
+      try {
+        await signOut(auth);
+      } catch (err) {
+        console.warn("Gagal signOut dari Firebase Auth:", err);
+      }
+    }
+    try {
+      localStorage.removeItem("bakarya_user_uid");
+      localStorage.removeItem("bakarya_user_role");
+    } catch {}
+    setRole("public");
+    setLoggedInUserUid(null);
+    setActiveTab("beranda");
+    triggerToast("Anda telah keluar dari sesi akun.", "info");
+  };
 
   // Set Session ID
   useEffect(() => {
@@ -321,7 +403,27 @@ export default function App() {
     );
 
     if (payload.mode === "login") {
-      if (!existing) {
+      let targetUser = existing;
+
+      // Jika user belum ada di state lokal tapi Firebase terhubung, coba cek Firebase Auth & Firestore
+      if (!targetUser && isFirebaseConfigured) {
+        if (auth && payload.password) {
+          try {
+            const authUser = await signInWithEmailAndPassword(auth, normalizedEmail, payload.password);
+            const remoteUsers = await fetchUsersFromFirestore();
+            if (remoteUsers) {
+              setUsersList(remoteUsers);
+              targetUser = remoteUsers.find(
+                (u) => u.email.toLowerCase() === normalizedEmail || u.uid === authUser.user.uid
+              );
+            }
+          } catch (e: any) {
+            console.warn("Gagal login Firebase Auth langsung:", e);
+          }
+        }
+      }
+
+      if (!targetUser) {
         triggerToast(
           "Email belum terdaftar. Silakan gunakan tab 'Daftar' untuk membuat akun baru.",
           "error"
@@ -330,21 +432,21 @@ export default function App() {
       }
 
       // Validasi kata sandi jika user mengisi atau akun memiliki kata sandi terdaftar
-      if (payload.password && existing.tempPassword) {
-        if (payload.password !== existing.tempPassword) {
+      if (payload.password && targetUser.tempPassword) {
+        if (payload.password !== targetUser.tempPassword) {
           triggerToast("Kata sandi yang Anda masukkan salah. Silakan coba lagi.", "error");
           return;
         }
       }
 
-      if (existing.accountStatus === "pending") {
+      if (targetUser.accountStatus === "pending") {
         triggerToast(
-          `Halo ${existing.displayName}, akun Anda masih menunggu persetujuan Admin Kurator.`,
+          `Halo ${targetUser.displayName}, akun Anda masih menunggu persetujuan Admin Kurator.`,
           "info"
         );
         return;
       }
-      if (existing.accountStatus !== "active") {
+      if (targetUser.accountStatus !== "active") {
         triggerToast("Akses akun ini sedang dibekukan oleh Admin.", "error");
         return;
       }
@@ -370,13 +472,17 @@ export default function App() {
       }
 
       setUsersList((prev) =>
-        prev.map((u) => (u.uid === existing.uid ? { ...u, lastLoginAt: nowWITA } : u))
+        prev.map((u) => (u.uid === targetUser.uid ? { ...u, lastLoginAt: nowWITA } : u))
       );
-      setLoggedInUserUid(existing.uid);
-      setRole(existing.role);
+      setLoggedInUserUid(targetUser.uid);
+      setRole(targetUser.role);
+      try {
+        localStorage.setItem("bakarya_user_uid", targetUser.uid);
+        localStorage.setItem("bakarya_user_role", targetUser.role);
+      } catch {}
       setActiveTab("dashboard");
       setIsAuthModalOpen(false);
-      triggerToast(`Selamat datang kembali, ${existing.displayName}!`, "success");
+      triggerToast(`Selamat datang kembali, ${targetUser.displayName}!`, "success");
       return;
     }
 
@@ -385,9 +491,13 @@ export default function App() {
       if (existing.accountStatus === "active") {
         setLoggedInUserUid(existing.uid);
         setRole(existing.role);
+        try {
+          localStorage.setItem("bakarya_user_uid", existing.uid);
+          localStorage.setItem("bakarya_user_role", existing.role);
+        } catch {}
         setActiveTab("dashboard");
         setIsAuthModalOpen(false);
-        triggerToast(`Akun Google sudah aktif! Masuk sebagai ${existing.displayName}.`, "success");
+        triggerToast(`Akun Anda sudah aktif! Masuk sebagai ${existing.displayName}.`, "success");
       } else {
         triggerToast(
           `Akun ${existing.email} sudah terdaftar dan sedang menunggu persetujuan Admin.`,
@@ -397,12 +507,36 @@ export default function App() {
       return;
     }
 
-    const newUid = "uid-google-" + Date.now();
+    let newUid = "uid-google-" + Date.now();
+
+    // 1. Buat akun kredensial di Firebase Auth jika Firebase aktif & ada password
+    if (isFirebaseConfigured && auth && payload.password) {
+      try {
+        const userCred = await createUserWithEmailAndPassword(auth, normalizedEmail, payload.password);
+        newUid = userCred.user.uid;
+        console.log("🔥 Berhasil mendaftarkan akun di Firebase Auth:", normalizedEmail, newUid);
+      } catch (authErr: any) {
+        console.warn("Peringatan pembuatan user Firebase Auth:", authErr);
+        if (authErr.code === "auth/email-already-in-use") {
+          try {
+            const userCred = await signInWithEmailAndPassword(auth, normalizedEmail, payload.password);
+            newUid = userCred.user.uid;
+          } catch (loginErr) {
+            triggerToast("Alamat email ini sudah terdaftar di Firebase Auth. Silakan gunakan tab Masuk.", "error");
+            return;
+          }
+        } else if (authErr.code === "auth/weak-password") {
+          triggerToast("Kata sandi terlalu pendek. Gunakan minimal 6 karakter.", "error");
+          return;
+        }
+      }
+    }
+
     const usernameFromEmail = normalizedEmail.split("@")[0].replace(/[^a-z0-9.]/g, "");
     const newGoogleContributor: UserAccount = {
       uid: newUid,
       username: usernameFromEmail || "guru.bakarya",
-      tempPassword: "GoogleOAuth2#Verified",
+      tempPassword: payload.password || "", // KATA SANDI TERSIMPAN SECARA NYATA
       displayName: payload.displayName,
       email: normalizedEmail,
       institution: payload.institution,
@@ -420,12 +554,12 @@ export default function App() {
 
     setUsersList((prev) => [newGoogleContributor, ...prev]);
     if (isFirebaseConfigured) {
-      saveUserToFirestore(newGoogleContributor);
+      await saveUserToFirestore(newGoogleContributor);
     }
 
     setIsAuthModalOpen(false);
     triggerToast(
-      "Pendaftaran dengan Akun Google berhasil dikirim! Begitu disetujui Admin, akun Anda otomatis aktif.",
+      "Pendaftaran berhasil! Kata sandi telah disimpan. Akun Anda sedang menunggu persetujuan Admin.",
       "success"
     );
   };
@@ -646,6 +780,7 @@ export default function App() {
           setIsFormModalOpen(true);
         }}
         onToast={triggerToast}
+        onLogout={handleLogout}
       />
 
       {/* Main Container */}

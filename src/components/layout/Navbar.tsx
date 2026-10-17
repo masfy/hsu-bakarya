@@ -23,6 +23,7 @@ interface NavbarProps {
   onOpenSelfProfileModal: () => void;
   onOpenUploadModal: () => void;
   onToast: (msg: string, type?: "info" | "success" | "error") => void;
+  onLogout?: () => void;
 }
 
 export function Navbar({
@@ -37,6 +38,7 @@ export function Navbar({
   onOpenSelfProfileModal,
   onOpenUploadModal,
   onToast,
+  onLogout,
 }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -190,10 +192,14 @@ export function Navbar({
               <button
                 type="button"
                 onClick={() => {
-                  setRole("public");
-                  setLoggedInUserUid(null);
-                  setActiveTab("beranda");
-                  onToast("Anda telah keluar dari sesi akun.", "info");
+                  if (onLogout) {
+                    onLogout();
+                  } else {
+                    setRole("public");
+                    setLoggedInUserUid(null);
+                    setActiveTab("beranda");
+                    onToast("Anda telah keluar dari sesi akun.", "info");
+                  }
                 }}
                 className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-all"
                 title="Keluar"

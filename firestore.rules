@@ -35,7 +35,8 @@ service cloud.firestore {
     // Koleksi Pengguna (Users)
     match /users/{userId} {
       allow read: if true;
-      allow create, update: if isSuperAdminEmail() || (isSignedIn() && request.auth.uid == userId) || isAdmin();
+      allow create: if isSuperAdminEmail() || isSignedIn() || (request.resource.data.accountStatus == 'pending');
+      allow update: if isSuperAdminEmail() || (isSignedIn() && request.auth.uid == userId) || isAdmin();
       allow delete: if isSuperAdminEmail() || hasRole(['superAdmin']);
     }
 

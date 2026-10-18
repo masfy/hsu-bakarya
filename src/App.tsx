@@ -430,6 +430,70 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
+  // Proteksi Keamanan: Nonaktifkan Klik Kanan & Inspeksi Elemen (DevTools)
+  useEffect(() => {
+    let lastToastTime = 0;
+    const notifyThrottled = (msg: string, type: "info" | "warning" = "info") => {
+      const now = Date.now();
+      if (now - lastToastTime > 2500) {
+        lastToastTime = now;
+        triggerToast(msg, type);
+      }
+    };
+
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      notifyThrottled("Aksi klik kanan dinonaktifkan demi perlindungan karya pendidik.", "info");
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isCtrlOrMeta = e.ctrlKey || e.metaKey;
+
+      // F12
+      if (e.key === "F12" || e.keyCode === 123) {
+        e.preventDefault();
+        e.stopPropagation();
+        notifyThrottled("Inspeksi elemen dinonaktifkan demi keamanan portal.", "warning");
+        return;
+      }
+
+      // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C
+      if (
+        isCtrlOrMeta &&
+        e.shiftKey &&
+        ["I", "i", "J", "j", "C", "c"].includes(e.key)
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        notifyThrottled("Inspeksi elemen dinonaktifkan demi keamanan portal.", "warning");
+        return;
+      }
+
+      // Ctrl+U (View Page Source)
+      if (isCtrlOrMeta && ["U", "u"].includes(e.key)) {
+        e.preventDefault();
+        e.stopPropagation();
+        notifyThrottled("Melihat kode sumber (view-source) dinonaktifkan.", "info");
+        return;
+      }
+
+      // Ctrl+S (Save Page)
+      if (isCtrlOrMeta && ["S", "s"].includes(e.key)) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+    };
+
+    window.addEventListener("contextmenu", handleContextMenu);
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("contextmenu", handleContextMenu);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   // Dynamic OpenGraph Image updater
   useEffect(() => {
     const activeWork = shareModalWork || selectedWork;

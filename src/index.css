@@ -9,6 +9,12 @@
     overflow-x: hidden;
     max-width: 100vw;
     width: 100%;
+    -webkit-touch-callout: none; /* Cegah menu long-press di iPhone / iPad Safari */
+  }
+
+  img {
+    -webkit-user-drag: none;
+    user-select: none;
   }
 
   /* Custom Clean Scrollbar */

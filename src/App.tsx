@@ -84,9 +84,19 @@ import { AnalyticsView } from "./views/AnalyticsView";
 import { GuideView } from "./views/GuideView";
 import { ArchitectureView } from "./views/ArchitectureView";
 
+// Batas Waktu Inaktivitas Akun: 30 Menit (1.800.000 ms)
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
+
 export default function App() {
   const [role, setRole] = useState<UserRole>(() => {
     try {
+      const lastActive = localStorage.getItem("bakarya_last_activity_time");
+      if (lastActive && Date.now() - Number(lastActive) > INACTIVITY_TIMEOUT_MS) {
+        localStorage.removeItem("bakarya_user_uid");
+        localStorage.removeItem("bakarya_user_role");
+        localStorage.removeItem("bakarya_last_activity_time");
+        return "public";
+      }
       const saved = localStorage.getItem("bakarya_user_role");
       return (saved as UserRole) || "public";
     } catch {
@@ -95,6 +105,10 @@ export default function App() {
   });
   const [loggedInUserUid, setLoggedInUserUid] = useState<string | null>(() => {
     try {
+      const lastActive = localStorage.getItem("bakarya_last_activity_time");
+      if (lastActive && Date.now() - Number(lastActive) > INACTIVITY_TIMEOUT_MS) {
+        return null;
+      }
       return localStorage.getItem("bakarya_user_uid") || null;
     } catch {
       return null;
@@ -332,6 +346,12 @@ export default function App() {
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+        const lastActiveStr = localStorage.getItem("bakarya_last_activity_time");
+        if (lastActiveStr && Date.now() - Number(lastActiveStr) > INACTIVITY_TIMEOUT_MS) {
+          handleLogout("inactivity");
+          return;
+        }
+
         const userEmail = firebaseUser.email?.toLowerCase();
         console.log("🔥 Sesi Firebase Auth terdeteksi aktif:", userEmail);
 
@@ -356,6 +376,9 @@ export default function App() {
             try {
               localStorage.setItem("bakarya_user_uid", found.uid);
               localStorage.setItem("bakarya_user_role", found.role);
+              if (!lastActiveStr) {
+                localStorage.setItem("bakarya_last_activity_time", Date.now().toString());
+              }
             } catch {}
           }
         } else if (userEmail === "alfyarnaim@gmail.com") {
@@ -364,6 +387,9 @@ export default function App() {
           try {
             localStorage.setItem("bakarya_user_uid", "uid-super-alfyarnaim");
             localStorage.setItem("bakarya_user_role", "superAdmin");
+            if (!lastActiveStr) {
+              localStorage.setItem("bakarya_last_activity_time", Date.now().toString());
+            }
           } catch {}
         }
       }
@@ -372,7 +398,7 @@ export default function App() {
     return () => unsubscribe();
   }, [usersList]);
 
-  const handleLogout = async () => {
+  const handleLogout = async (reason: "inactivity" | "manual" = "manual") => {
     if (isFirebaseConfigured && auth) {
       try {
         await signOut(auth);
@@ -383,12 +409,92 @@ export default function App() {
     try {
       localStorage.removeItem("bakarya_user_uid");
       localStorage.removeItem("bakarya_user_role");
+      localStorage.removeItem("bakarya_last_activity_time");
     } catch {}
     setRole("public");
     setLoggedInUserUid(null);
     setActiveTab("beranda");
-    triggerToast("Anda telah keluar dari sesi akun.", "info");
+    if (reason === "inactivity") {
+      triggerToast(
+        "Sesi Anda berakhir otomatis demi keamanan karena tidak ada aktivitas selama 30 menit.",
+        "warning"
+      );
+    } else {
+      triggerToast("Anda telah keluar dari sesi akun.", "info");
+    }
   };
+
+  // Proteksi Keamanan Akun: Auto-Logout jika 30 Menit Tidak Ada Aktivitas
+  useEffect(() => {
+    if (role === "public" || !loggedInUserUid) return;
+
+    // Pastikan timestamp aktivitas awal tercatat
+    if (!localStorage.getItem("bakarya_last_activity_time")) {
+      try {
+        localStorage.setItem("bakarya_last_activity_time", Date.now().toString());
+      } catch {}
+    }
+
+    let lastRecordedActivity = Date.now();
+
+    // Catat aktivitas pengguna (throttled tiap 8 detik agar performa ringan)
+    const recordActivity = () => {
+      const now = Date.now();
+      if (now - lastRecordedActivity > 8000) {
+        lastRecordedActivity = now;
+        try {
+          localStorage.setItem("bakarya_last_activity_time", now.toString());
+        } catch {}
+      }
+    };
+
+    // Event interaksi pengguna: mouse, klik, keyboard, sentuhan layar HP, scrolling
+    const activityEvents = [
+      "mousedown",
+      "mousemove",
+      "keydown",
+      "touchstart",
+      "touchmove",
+      "scroll",
+      "click",
+    ];
+
+    activityEvents.forEach((evt) => {
+      window.addEventListener(evt, recordActivity, { passive: true });
+    });
+
+    // Pengecekan inaktivitas berkala setiap 20 detik
+    const timerInterval = setInterval(() => {
+      const lastActiveStr = localStorage.getItem("bakarya_last_activity_time");
+      const lastActive = lastActiveStr ? Number(lastActiveStr) : lastRecordedActivity;
+      const elapsed = Date.now() - lastActive;
+
+      if (elapsed >= INACTIVITY_TIMEOUT_MS) {
+        clearInterval(timerInterval);
+        handleLogout("inactivity");
+      }
+    }, 20000);
+
+    // Saat tab dibuka kembali dari background/sleep
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        const lastActiveStr = localStorage.getItem("bakarya_last_activity_time");
+        if (lastActiveStr && Date.now() - Number(lastActiveStr) >= INACTIVITY_TIMEOUT_MS) {
+          clearInterval(timerInterval);
+          handleLogout("inactivity");
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      activityEvents.forEach((evt) => {
+        window.removeEventListener(evt, recordActivity);
+      });
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      clearInterval(timerInterval);
+    };
+  }, [role, loggedInUserUid]);
 
   // Set Session ID & Record Real Daily Traffic
   useEffect(() => {
@@ -675,6 +781,7 @@ export default function App() {
       try {
         localStorage.setItem("bakarya_user_uid", targetUser.uid);
         localStorage.setItem("bakarya_user_role", targetUser.role);
+        localStorage.setItem("bakarya_last_activity_time", Date.now().toString());
       } catch {}
       setActiveTab("dashboard");
       setIsAuthModalOpen(false);
@@ -690,6 +797,7 @@ export default function App() {
         try {
           localStorage.setItem("bakarya_user_uid", existing.uid);
           localStorage.setItem("bakarya_user_role", existing.role);
+          localStorage.setItem("bakarya_last_activity_time", Date.now().toString());
         } catch {}
         setActiveTab("dashboard");
         setIsAuthModalOpen(false);

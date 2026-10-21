@@ -97,3 +97,20 @@ export function getWorkEffectiveTime(work: Work): number {
 
   return Math.max(updated, published, created, idTime, 0);
 }
+
+/**
+ * Mendapatkan timestamp persetujuan / publikasi karya untuk pengurutan "Terbaru".
+ * Media terbaru diprioritaskan berdasarkan media yang terakhir disetujui / di-approve kurator (publishedAt).
+ */
+export function getWorkApprovalTime(work: Work): number {
+  const published = parseIndoDate(work.publishedAt);
+  if (published > 0) return published;
+
+  const updated = parseIndoDate(work.updatedAt);
+  if (updated > 0) return updated;
+
+  const created = parseIndoDate(work.createdAt);
+  if (created > 0) return created;
+
+  return getTimestampFromId(work.id);
+}

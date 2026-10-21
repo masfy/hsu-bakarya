@@ -727,7 +727,7 @@ export function HomeView({
         const currentWorks = showAllInHome ? targetWorks : targetWorks.slice(startIndex, endIndex);
 
         return (
-          <section className="space-y-6 pt-2">
+          <section id="section-karya-pilihan" className="space-y-6 pt-2">
             {/* Banner Pemberitahuan jika pengguna memiliki karya yang sedang di antrean/draf */}
             {role !== "public" && myPendingOrDraftWorks.length > 0 && (
               <div className="bg-gradient-to-r from-amber-500/10 via-[#F2B84B]/15 to-amber-500/10 border border-[#F2B84B]/30 rounded-3xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
@@ -1019,6 +1019,7 @@ export function HomeView({
                       onClick={() => {
                         resetAllFilters();
                         setActiveTab("jelajah");
+                        window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
                       className="px-4 py-2.5 rounded-xl bg-[#167D78] hover:bg-[#14213D] text-white text-xs font-extrabold shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 active:scale-95"
                     >

@@ -32,7 +32,7 @@ import {
   BAKARYA_FAVICON_URL,
   BAKARYA_DEFAULT_THUMBNAIL_URL,
 } from "./utils/drive";
-import { getWorkEffectiveTime } from "./utils/date";
+import { getWorkEffectiveTime, getWorkApprovalTime } from "./utils/date";
 import { auth, isFirebaseConfigured } from "./services/firebase";
 import {
   signInWithEmailAndPassword,
@@ -300,7 +300,19 @@ export default function App() {
     if (isFirebaseConfigured) {
       fetchWorksFromFirestore().then((remoteWorks) => {
         if (remoteWorks !== null) {
-          setWorks(remoteWorks);
+          setWorks((prev) => {
+            const remoteMap = new Map(remoteWorks.map((w) => [w.id, w]));
+            // Pertahankan karya lokal yang belum tersimpan di Firestore agar tidak hilang saat refresh
+            const localOnly = prev.filter((w) => !remoteMap.has(w.id) && !w.isDeleted);
+            localOnly.forEach((w) => {
+              saveWorkToFirestore(w);
+            });
+            const merged = [...remoteWorks, ...localOnly];
+            try {
+              localStorage.setItem("bakarya_cached_works", JSON.stringify(merged));
+            } catch {}
+            return merged;
+          });
         }
       });
       fetchUsersFromFirestore().then((remoteUsers) => {
@@ -1029,8 +1041,9 @@ export default function App() {
           if (clicksB !== clicksA) return clicksB - clicksA;
         }
 
-        const timeA = getWorkEffectiveTime(a);
-        const timeB = getWorkEffectiveTime(b);
+        // Pengurutan "Terbaru" diprioritaskan berdasarkan media yang terakhir disetujui / di-approve (publishedAt)
+        const timeA = getWorkApprovalTime(a);
+        const timeB = getWorkApprovalTime(b);
         if (timeB !== timeA) return timeB - timeA;
         return b.id.localeCompare(a.id);
       });
@@ -1082,7 +1095,7 @@ export default function App() {
     const targetWork = works.find((w) => w.id === workId);
     if (!targetWork) return;
 
-    const nowWITA = "16 Okt 2026, 08:40 WITA";
+    const nowWITA = new Date().toLocaleString("id-ID", { timeZone: "Asia/Makassar" }) + " WITA";
     const actor = role === "superAdmin" ? "Super Admin BAKARYA" : "Admin Kurator Disdik HSU";
 
     const updatedWork: Work = {

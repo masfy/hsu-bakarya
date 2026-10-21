@@ -743,8 +743,8 @@ export function HomeView({
                     </p>
                     <p className="text-[11px] text-[#727782] mt-0.5">
                       {role === "admin" || role === "superAdmin"
-                        ? "Sebagai Admin / Super Admin, Anda dapat memoderasi atau menerbitkannya langsung di Dashboard."
-                        : "Karya Anda tersimpan aman dan sedang ditinjau kurator. Anda dapat melihatnya di tab 'Karya Saya' atau Dashboard."}
+                        ? "Sebagai Admin / Super Admin, Anda dapat memoderasi atau menerbitkannya langsung di Meja Kurasi."
+                        : "Karya Anda tersimpan aman dan sedang ditinjau kurator. Anda dapat melihatnya di tab 'Karya Saya' atau Ruang Kerja Guru."}
                     </p>
                   </div>
                 </div>
@@ -768,7 +768,7 @@ export function HomeView({
                     onClick={() => setActiveTab("dashboard")}
                     className="px-4 py-2 rounded-xl bg-[#167D78] hover:bg-[#14213D] text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5"
                   >
-                    <span>Buka Dashboard</span>
+                    <span>{role === "contributor" ? "Buka Ruang Kerja" : "Buka Meja Kurasi"}</span>
                     <ArrowUpRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -1024,7 +1024,7 @@ export function HomeView({
                       className="px-4 py-2.5 rounded-xl bg-[#167D78] hover:bg-[#14213D] text-white text-xs font-extrabold shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 active:scale-95"
                     >
                       <Compass className="w-4 h-4" />
-                      <span>Lihat Seluruh Karya ({filteredPublicWorks.length})</span>
+                      <span>Buka Katalog Lengkap ({filteredPublicWorks.length} Karya)</span>
                       <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>

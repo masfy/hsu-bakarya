@@ -97,10 +97,10 @@ export function ExploreView({
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <span className="text-xs font-extrabold uppercase tracking-widest text-[#167D78]">
-              Direktori Terkurasi
+              Katalog Publik Terkurasi
             </span>
             <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#14213D] mt-0.5">
-              Eksplorasi Karya Pembelajaran
+              Katalog Karya Pembelajaran Banua
             </h1>
           </div>
 

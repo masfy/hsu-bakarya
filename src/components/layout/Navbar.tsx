@@ -44,12 +44,16 @@ export function Navbar({
 
   const navItems = [
     { id: "beranda", label: "Beranda" },
-    { id: "jelajah", label: "Karya" },
-    {
-      id: "dashboard",
-      label: role === "public" ? "Dashboard" : role === "contributor" ? "Dashboard" : "Moderasi",
-      highlight: role !== "public",
-    },
+    { id: "jelajah", label: "Katalog Karya" },
+    ...(role !== "public"
+      ? [
+          {
+            id: "dashboard",
+            label: role === "contributor" ? "Ruang Kerja Guru" : "Meja Kurasi",
+            highlight: true,
+          },
+        ]
+      : []),
     { id: "kontributor", label: "Kontributor" },
     { id: "analitik", label: "Analitik" },
     ...(role === "admin" || role === "superAdmin"

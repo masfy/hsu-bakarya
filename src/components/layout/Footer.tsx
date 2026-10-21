@@ -59,7 +59,7 @@ export function Footer({ setActiveTab }: FooterProps) {
                   onClick={() => setActiveTab("jelajah")}
                   className="hover:text-[#167D78] transition-colors"
                 >
-                  Jelajah Karya Interaktif
+                  Katalog Karya Pembelajaran
                 </button>
               </li>
               <li>

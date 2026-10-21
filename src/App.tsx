@@ -32,6 +32,7 @@ import {
   BAKARYA_FAVICON_URL,
   BAKARYA_DEFAULT_THUMBNAIL_URL,
 } from "./utils/drive";
+import { getWorkEffectiveTime } from "./utils/date";
 import { auth, isFirebaseConfigured } from "./services/firebase";
 import {
   signInWithEmailAndPassword,
@@ -626,7 +627,7 @@ export default function App() {
       : role === "admin"
       ? "uid-admin-1"
       : role === "superAdmin"
-      ? "uid-super-1"
+      ? "uid-super-alfyarnaim"
       : null;
   }, [role, loggedInUserUid, usersList]);
 
@@ -1022,7 +1023,15 @@ export default function App() {
         );
       })
       .sort((a, b) => {
-        if (sortBy === "popular") return b.viewCount - a.viewCount;
+        if (sortBy === "popular") {
+          const clicksA = (a.outboundClickCount || 0) * 2 + (a.viewCount || 0);
+          const clicksB = (b.outboundClickCount || 0) * 2 + (b.viewCount || 0);
+          if (clicksB !== clicksA) return clicksB - clicksA;
+        }
+
+        const timeA = getWorkEffectiveTime(a);
+        const timeB = getWorkEffectiveTime(b);
+        if (timeB !== timeA) return timeB - timeA;
         return b.id.localeCompare(a.id);
       });
   }, [
@@ -1179,6 +1188,11 @@ export default function App() {
               setSortBy={setSortBy}
               role={role}
               heroPhraseIdx={heroPhraseIdx}
+              currentUserProfile={currentUserProfile}
+              onOpenUploadModal={() => {
+                setEditingWork(null);
+                setIsFormModalOpen(true);
+              }}
               onOpenWorkDetail={handleOpenWorkDetail}
               onShareWork={(w) => setShareModalWork(w)}
               onSelectContributor={(c) => {
@@ -1374,11 +1388,12 @@ export default function App() {
             subjectsList={subjectsList}
             categoriesList={categoriesList}
             mediaTypesList={mediaTypesList}
+            userRole={role}
             onAddSubject={handleAddCustomSubject}
             onAddCategory={handleAddCustomCategory}
             onAddMediaType={handleAddCustomMediaType}
             onClose={() => setIsFormModalOpen(false)}
-            onSave={async (payload, submitForReview) => {
+            onSave={async (payload, action) => {
               const nowWITA = new Date().toLocaleString("id-ID", { timeZone: "Asia/Makassar" }) + " WITA";
               const resolvedThumb = payload.thumbnailURL?.trim()
                 ? getDriveDirectImageUrl(payload.thumbnailURL)
@@ -1386,8 +1401,14 @@ export default function App() {
                 ? getDriveDirectImageUrl(payload.mediaURL)
                 : BAKARYA_DEFAULT_THUMBNAIL_URL;
 
+              const targetStatus: WorkStatus =
+                action === "publish"
+                  ? "published"
+                  : action === "review"
+                  ? "pending_review"
+                  : "draft";
+
               if (editingWork) {
-                const isAlreadyPublished = editingWork.status === "published";
                 const targetClasses =
                   payload.classIds && payload.classIds.length > 0
                     ? payload.classIds
@@ -1398,26 +1419,40 @@ export default function App() {
                   ...payload,
                   classIds: targetClasses,
                   thumbnailURL: resolvedThumb,
-                  status: isAlreadyPublished
-                    ? "published"
-                    : submitForReview
-                    ? "pending_review"
-                    : "draft",
+                  status: targetStatus,
                   updatedAt: nowWITA,
-                  submittedAt: submitForReview ? nowWITA : editingWork.submittedAt,
+                  submittedAt: action === "review" ? nowWITA : editingWork.submittedAt,
+                  publishedAt: action === "publish" ? (editingWork.publishedAt || nowWITA) : editingWork.publishedAt,
                 } as Work;
 
                 setWorks((prev) => prev.map((w) => (w.id === editingWork.id ? updated : w)));
                 if (isFirebaseConfigured) await saveWorkToFirestore(updated);
                 triggerToast(
-                  isAlreadyPublished
-                    ? "Perubahan karya & tautan media berhasil disimpan!"
-                    : submitForReview
-                    ? "Karya diajukan ke Admin Kurator!"
-                    : "Draf disimpan.",
+                  targetStatus === "published"
+                    ? "Perubahan karya disimpan & berhasil diterbitkan!"
+                    : targetStatus === "pending_review"
+                    ? "Karya diajukan ke kurator!"
+                    : "Draf berhasil disimpan.",
                   "success"
                 );
               } else {
+                const defaultContribId =
+                  currentUserProfile?.uid ||
+                  (role === "admin"
+                    ? "uid-admin-1"
+                    : role === "superAdmin"
+                    ? "uid-super-alfyarnaim"
+                    : "uid-contrib-1");
+                const defaultContribName =
+                  currentUserProfile?.displayName ||
+                  (role === "admin"
+                    ? "Admin Kurator Disdik HSU"
+                    : role === "superAdmin"
+                    ? "Alfyar Naim"
+                    : "Siti Rahmah, S.Pd.");
+                const defaultInstitution =
+                  currentUserProfile?.institution || "Kabupaten Hulu Sungai Utara";
+
                 const newWork: Work = {
                   id: "work-" + Date.now(),
                   title: payload.title || "Karya Baru",
@@ -1431,23 +1466,30 @@ export default function App() {
                   educationLevelIds: payload.educationLevelIds || ["sd"],
                   classIds: payload.classIds && payload.classIds.length > 0 ? payload.classIds : ["k4"],
                   subjectIds: payload.subjectIds || ["matematika"],
-                  contributorId: currentUserProfile?.uid || "uid-contrib-1",
-                  contributorNameSnapshot: currentUserProfile?.displayName || "Siti Rahmah, S.Pd.",
-                  contributorInstitution: currentUserProfile?.institution || "SDN Paliwara 1 Amuntai",
-                  status: submitForReview ? "pending_review" : "draft",
+                  contributorId: defaultContribId,
+                  contributorNameSnapshot: defaultContribName,
+                  contributorInstitution: defaultInstitution,
+                  status: targetStatus,
                   moderationNote: "",
                   viewCount: 0,
                   outboundClickCount: 0,
                   createdAt: nowWITA,
                   updatedAt: nowWITA,
-                  submittedAt: submitForReview ? nowWITA : null,
-                  publishedAt: null,
+                  submittedAt: action === "review" ? nowWITA : null,
+                  publishedAt: action === "publish" ? nowWITA : null,
                   isDeleted: false,
                 };
 
                 setWorks((prev) => [newWork, ...prev]);
                 if (isFirebaseConfigured) await saveWorkToFirestore(newWork);
-                triggerToast(submitForReview ? "Karya berhasil diajukan ke Admin!" : "Disimpan sebagai Draf.", "success");
+                triggerToast(
+                  targetStatus === "published"
+                    ? "Karya baru berhasil diterbitkan langsung dan kini tampil di Beranda!"
+                    : targetStatus === "pending_review"
+                    ? "Karya baru berhasil diajukan ke kurator! Anda dapat memantau statusnya di menu Dashboard."
+                    : "Karya baru disimpan sebagai Draf.",
+                  "success"
+                );
               }
               setIsFormModalOpen(false);
             }}

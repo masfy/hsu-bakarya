@@ -1,10 +1,13 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
   Search,
   CheckCircle2,
   ChevronRight,
+  ChevronLeft,
+  Compass,
+  Plus,
   ArrowUpRight,
   Layers,
   Eye,
@@ -61,10 +64,12 @@ interface HomeViewProps {
   setSortBy: (s: string) => void;
   role: UserRole;
   heroPhraseIdx: number;
+  currentUserProfile?: UserAccount | null;
   onOpenWorkDetail: (w: Work) => void;
   onShareWork: (w: Work) => void;
   onSelectContributor: (c: UserAccount) => void;
   onOpenAuthModal: (mode: "login" | "register") => void;
+  onOpenUploadModal?: () => void;
 }
 
 export function HomeView({
@@ -76,6 +81,7 @@ export function HomeView({
   monthlyStats = [],
   searchQuery,
   setSearchQuery,
+  selectedLevel,
   setSelectedLevel,
   setSelectedMediaType,
   resetAllFilters,
@@ -84,11 +90,21 @@ export function HomeView({
   setSortBy,
   role,
   heroPhraseIdx,
+  currentUserProfile,
   onOpenWorkDetail,
   onShareWork,
   onSelectContributor,
   onOpenAuthModal,
+  onOpenUploadModal,
 }: HomeViewProps) {
+  const [homePage, setHomePage] = useState(1);
+  const [showAllInHome, setShowAllInHome] = useState(false);
+  const [activeWorkFilter, setActiveWorkFilter] = useState<"all" | "mine">("all");
+
+  useEffect(() => {
+    setHomePage(1);
+  }, [sortBy, activeWorkFilter, searchQuery, selectedLevel]);
+
   // Perhitungan Statistik Kunjungan & Dampak Pemanfaatan 100% Nyata (Real Data)
   const publishedWorks = useMemo(
     () => works.filter((w) => w.status === "published" && !w.isDeleted),
@@ -696,88 +712,327 @@ export function HomeView({
       </section>
 
       {/* KARYA UNGGULAN & TERBARU */}
-      <section className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div>
-            <span className="text-xs font-extrabold uppercase tracking-widest text-[#167D78]">
-              Karya Pilihan Banua
-            </span>
-            <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-[#14213D] mt-1">
-              Karya Terbaru & Terpopuler
-            </h2>
-          </div>
+      {(() => {
+        const myWorks = works.filter(
+          (w) => !w.isDeleted && currentUserProfile?.uid && w.contributorId === currentUserProfile.uid
+        );
+        const myPendingOrDraftWorks = myWorks.filter((w) => w.status !== "published");
 
-          <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-[#14213D]/10 shadow-sm">
-            <button
-              type="button"
-              onClick={() => setSortBy("newest")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                sortBy === "newest" ? "bg-[#14213D] text-white" : "text-[#727782] hover:text-[#14213D]"
-              }`}
-            >
-              Terbaru
-            </button>
-            <button
-              type="button"
-              onClick={() => setSortBy("popular")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                sortBy === "popular" ? "bg-[#14213D] text-white" : "text-[#727782] hover:text-[#14213D]"
-              }`}
-            >
-              Populer
-            </button>
-          </div>
-        </div>
+        const targetWorks = activeWorkFilter === "mine" ? myWorks : filteredPublicWorks;
+        const ITEMS_PER_PAGE = 6;
+        const totalPages = Math.ceil(targetWorks.length / ITEMS_PER_PAGE) || 1;
+        const safePage = Math.min(Math.max(homePage, 1), totalPages);
+        const startIndex = (safePage - 1) * ITEMS_PER_PAGE;
+        const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, targetWorks.length);
+        const currentWorks = showAllInHome ? targetWorks : targetWorks.slice(startIndex, endIndex);
 
-        {filteredPublicWorks.length === 0 ? (
-          <div className="bg-white rounded-3xl p-10 sm:p-14 text-center border border-[#14213D]/10 shadow-sm max-w-xl mx-auto space-y-4">
-            <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto shadow-sm">
-              <Sparkles className="w-8 h-8 text-[#F2B84B]" />
-            </div>
-            <div className="space-y-1">
-              <h3 className="font-display font-extrabold text-[#14213D] text-lg sm:text-xl">
-                Belum Ada Karya yang Diterbitkan
-              </h3>
-              <p className="text-xs sm:text-sm text-[#727782] max-w-md mx-auto leading-relaxed">
-                Database Cloud Firestore dalam keadaan bersih (Clean State). Guru dan Admin dapat masuk untuk mengunggah inovasi media pembelajaran interaktif!
-              </p>
-            </div>
-            {role === "public" ? (
-              <button
-                type="button"
-                onClick={() => onOpenAuthModal("login")}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#14213D] hover:bg-[#167D78] text-white text-xs font-bold shadow-md transition-all"
-              >
-                Masuk / Unggah Karya
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setActiveTab("dashboard")}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#167D78] hover:bg-[#14213D] text-white text-xs font-bold shadow-md transition-all"
-              >
-                Buka Dashboard
-              </button>
+        return (
+          <section className="space-y-6 pt-2">
+            {/* Banner Pemberitahuan jika pengguna memiliki karya yang sedang di antrean/draf */}
+            {role !== "public" && myPendingOrDraftWorks.length > 0 && (
+              <div className="bg-gradient-to-r from-amber-500/10 via-[#F2B84B]/15 to-amber-500/10 border border-[#F2B84B]/30 rounded-3xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+                <div className="flex items-start sm:items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-2xl bg-[#F2B84B]/20 text-amber-800 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-5 h-5 text-amber-700" />
+                  </div>
+                  <div>
+                    <p className="text-xs sm:text-sm font-bold text-[#14213D]">
+                      Anda memiliki {myPendingOrDraftWorks.length} karya dalam status Kurasi / Draf:
+                      <span className="font-extrabold text-[#167D78]"> &ldquo;{myPendingOrDraftWorks[0].title}&rdquo;</span>
+                      {myPendingOrDraftWorks.length > 1 && ` dan ${myPendingOrDraftWorks.length - 1} lainnya.`}
+                    </p>
+                    <p className="text-[11px] text-[#727782] mt-0.5">
+                      {role === "admin" || role === "superAdmin"
+                        ? "Sebagai Admin / Super Admin, Anda dapat memoderasi atau menerbitkannya langsung di Dashboard."
+                        : "Karya Anda tersimpan aman dan sedang ditinjau kurator. Anda dapat melihatnya di tab 'Karya Saya' atau Dashboard."}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveWorkFilter("mine");
+                      setHomePage(1);
+                    }}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                      activeWorkFilter === "mine"
+                        ? "bg-[#14213D] text-white"
+                        : "bg-white text-[#14213D] hover:bg-[#F8F7F2] border border-[#14213D]/10"
+                    }`}
+                  >
+                    Lihat Karya Saya
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("dashboard")}
+                    className="px-4 py-2 rounded-xl bg-[#167D78] hover:bg-[#14213D] text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5"
+                  >
+                    <span>Buka Dashboard</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
             )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPublicWorks.slice(0, 6).map((work) => (
-              <WorkCard
-                key={work.id}
-                work={work}
-                mediaTypesList={mediaTypesList}
-                onSelect={() => onOpenWorkDetail(work)}
-                onShare={onShareWork}
-                onSelectContributor={(contribId) => {
-                  const found = usersList.find((c) => c.uid === contribId);
-                  if (found) onSelectContributor(found);
-                }}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+
+            {/* Header Section Karya Pilihan */}
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+              <div>
+                <span className="text-xs font-extrabold uppercase tracking-widest text-[#167D78]">
+                  Karya Pilihan Banua
+                </span>
+                <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-[#14213D] mt-1">
+                  Karya Terbaru & Terpopuler
+                </h2>
+              </div>
+
+              {/* Kontrol Tab Filter & Urutan */}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Tab Karya Publik vs Karya Saya */}
+                {role !== "public" && (
+                  <div className="flex items-center gap-1 bg-[#14213D]/5 p-1 rounded-xl border border-[#14213D]/10">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveWorkFilter("all");
+                        setHomePage(1);
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        activeWorkFilter === "all"
+                          ? "bg-[#14213D] text-white shadow-sm"
+                          : "text-[#727782] hover:text-[#14213D]"
+                      }`}
+                    >
+                      Semua Terbit ({filteredPublicWorks.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveWorkFilter("mine");
+                        setHomePage(1);
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        activeWorkFilter === "mine"
+                          ? "bg-[#167D78] text-white shadow-sm"
+                          : "text-[#727782] hover:text-[#167D78]"
+                      }`}
+                    >
+                      Karya Saya ({myWorks.length})
+                    </button>
+                  </div>
+                )}
+
+                {/* Tombol Urutan Terbaru / Populer */}
+                <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-[#14213D]/10 shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSortBy("newest");
+                      setHomePage(1);
+                    }}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      sortBy === "newest"
+                        ? "bg-[#14213D] text-white shadow-sm"
+                        : "text-[#727782] hover:text-[#14213D]"
+                    }`}
+                  >
+                    Terbaru
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSortBy("popular");
+                      setHomePage(1);
+                    }}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      sortBy === "popular"
+                        ? "bg-[#14213D] text-white shadow-sm"
+                        : "text-[#727782] hover:text-[#14213D]"
+                    }`}
+                  >
+                    Populer
+                  </button>
+                </div>
+
+                {/* Tombol Cepat Unggah Karya jika login */}
+                {role !== "public" && onOpenUploadModal && (
+                  <button
+                    type="button"
+                    onClick={onOpenUploadModal}
+                    className="px-3.5 py-1.5 rounded-xl bg-[#F2B84B] hover:bg-[#e0a83b] text-[#14213D] text-xs font-extrabold shadow-sm transition-all flex items-center gap-1.5"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Unggah Karya</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Konten Daftar Karya */}
+            {targetWorks.length === 0 ? (
+              <div className="bg-white rounded-3xl p-10 sm:p-14 text-center border border-[#14213D]/10 shadow-sm max-w-xl mx-auto space-y-4">
+                <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto shadow-sm">
+                  <Sparkles className="w-8 h-8 text-[#F2B84B]" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="font-display font-extrabold text-[#14213D] text-lg sm:text-xl">
+                    {activeWorkFilter === "mine"
+                      ? "Anda Belum Mengunggah Karya"
+                      : "Belum Ada Karya yang Diterbitkan"}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-[#727782] max-w-md mx-auto leading-relaxed">
+                    {activeWorkFilter === "mine"
+                      ? "Mulai bagikan media pembelajaran digital inovatif Anda sekarang untuk menginspirasi rekan pendidik di Gugus 2 HSU!"
+                      : "Database Cloud Firestore dalam keadaan bersih. Guru dan Admin dapat masuk untuk mengunggah inovasi media pembelajaran interaktif!"}
+                  </p>
+                </div>
+                {role === "public" ? (
+                  <button
+                    type="button"
+                    onClick={() => onOpenAuthModal("login")}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#14213D] hover:bg-[#167D78] text-white text-xs font-bold shadow-md transition-all"
+                  >
+                    Masuk / Unggah Karya
+                  </button>
+                ) : onOpenUploadModal ? (
+                  <button
+                    type="button"
+                    onClick={onOpenUploadModal}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#167D78] hover:bg-[#14213D] text-white text-xs font-bold shadow-md transition-all"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Unggah Karya Baru</span>
+                  </button>
+                ) : null}
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Grid Kartu Karya */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {currentWorks.map((work) => (
+                    <WorkCard
+                      key={work.id}
+                      work={work}
+                      mediaTypesList={mediaTypesList}
+                      onSelect={() => onOpenWorkDetail(work)}
+                      onShare={onShareWork}
+                      onSelectContributor={(contribId) => {
+                        const found = usersList.find((c) => c.uid === contribId);
+                        if (found) onSelectContributor(found);
+                      }}
+                    />
+                  ))}
+                </div>
+
+                {/* Tombol Navigasi Karya Selanjutnya, Pagination & Lihat Seluruh Karya */}
+                <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#14213D]/10">
+                  <div className="text-xs text-[#727782] font-medium text-center sm:text-left">
+                    Menampilkan{" "}
+                    <strong className="text-[#14213D]">
+                      {startIndex + 1} - {endIndex}
+                    </strong>{" "}
+                    dari <strong className="text-[#14213D]">{targetWorks.length}</strong> karya{" "}
+                    {activeWorkFilter === "mine" ? "milik Anda" : "pilihan"}
+                  </div>
+
+                  {/* Navigasi Paginasi Halaman */}
+                  {targetWorks.length > ITEMS_PER_PAGE && !showAllInHome && (
+                    <div className="flex items-center gap-1.5 bg-white p-1 rounded-2xl border border-[#14213D]/10 shadow-sm">
+                      <button
+                        type="button"
+                        disabled={safePage <= 1}
+                        onClick={() => {
+                          setHomePage((p) => Math.max(p - 1, 1));
+                          const el = document.getElementById("section-karya-pilihan");
+                          if (el) el.scrollIntoView({ behavior: "smooth" });
+                        }}
+                        className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 transition-all ${
+                          safePage <= 1
+                            ? "text-gray-300 cursor-not-allowed"
+                            : "text-[#14213D] hover:bg-[#F8F7F2] active:scale-95"
+                        }`}
+                        title="Karya Sebelumnya"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                        <span className="hidden sm:inline">Sebelumnya</span>
+                      </button>
+
+                      {/* Angka Halaman */}
+                      <div className="flex items-center gap-1 px-1">
+                        {Array.from({ length: totalPages }).map((_, idx) => {
+                          const pageNum = idx + 1;
+                          return (
+                            <button
+                              key={pageNum}
+                              type="button"
+                              onClick={() => {
+                                setHomePage(pageNum);
+                                const el = document.getElementById("section-karya-pilihan");
+                                if (el) el.scrollIntoView({ behavior: "smooth" });
+                              }}
+                              className={`w-8 h-8 rounded-xl text-xs font-extrabold transition-all ${
+                                safePage === pageNum
+                                  ? "bg-[#14213D] text-white shadow-sm"
+                                  : "text-[#727782] hover:bg-[#F8F7F2] hover:text-[#14213D]"
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <button
+                        type="button"
+                        disabled={safePage >= totalPages}
+                        onClick={() => {
+                          setHomePage((p) => Math.min(p + 1, totalPages));
+                          const el = document.getElementById("section-karya-pilihan");
+                          if (el) el.scrollIntoView({ behavior: "smooth" });
+                        }}
+                        className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 transition-all ${
+                          safePage >= totalPages
+                            ? "text-gray-300 cursor-not-allowed"
+                            : "text-[#14213D] hover:bg-[#F8F7F2] active:scale-95"
+                        }`}
+                        title="Karya Selanjutnya"
+                      >
+                        <span className="hidden sm:inline">Selanjutnya</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Tombol Aksi: Lihat Seluruh Karya */}
+                  <div className="flex items-center gap-2">
+                    {targetWorks.length > ITEMS_PER_PAGE && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAllInHome(!showAllInHome)}
+                        className="px-3.5 py-2.5 rounded-xl border border-[#14213D]/15 text-xs font-bold text-[#727782] hover:text-[#14213D] hover:bg-white transition-colors"
+                      >
+                        {showAllInHome ? "Tampilkan Per Halaman (6)" : "Buka Semua di Beranda"}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        resetAllFilters();
+                        setActiveTab("jelajah");
+                      }}
+                      className="px-4 py-2.5 rounded-xl bg-[#167D78] hover:bg-[#14213D] text-white text-xs font-extrabold shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 active:scale-95"
+                    >
+                      <Compass className="w-4 h-4" />
+                      <span>Lihat Seluruh Karya ({filteredPublicWorks.length})</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+        );
+      })()}
     </motion.div>
   );
 }

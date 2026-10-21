@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { X, AlertTriangle, Check } from "lucide-react";
-import { Work, Subject, Category, MediaType } from "../../types";
+import { X, AlertTriangle, Check, Sparkles, Send, FileText } from "lucide-react";
+import { Work, Subject, Category, MediaType, UserRole } from "../../types";
 import { EDUCATION_LEVELS, CLASSES_DATA } from "../../data/initialData";
 
 interface WorkFormWizardModalProps {
@@ -9,11 +9,12 @@ interface WorkFormWizardModalProps {
   subjectsList: Subject[];
   categoriesList: Category[];
   mediaTypesList: MediaType[];
+  userRole?: UserRole;
   onAddSubject: (name: string) => string | null;
   onAddCategory: (name: string) => string | null;
   onAddMediaType: (name: string) => string | null;
   onClose: () => void;
-  onSave: (data: Partial<Work>, submitForReview: boolean) => void;
+  onSave: (data: Partial<Work>, action: "publish" | "review" | "draft") => void;
 }
 
 export function WorkFormWizardModal({
@@ -21,6 +22,7 @@ export function WorkFormWizardModal({
   subjectsList,
   categoriesList,
   mediaTypesList,
+  userRole = "public",
   onAddSubject,
   onAddCategory,
   onAddMediaType,
@@ -81,7 +83,7 @@ export function WorkFormWizardModal({
     }
   };
 
-  const validateAndSubmit = (submitForReview: boolean) => {
+  const validateAndSubmit = (action: "publish" | "review" | "draft") => {
     if (!title.trim() || title.trim().length < 5) {
       setErrorMsg("Judul karya minimal 5 karakter.");
       setStep(1);
@@ -117,7 +119,7 @@ export function WorkFormWizardModal({
         mediaURL,
         thumbnailURL,
       },
-      submitForReview
+      action
     );
   };
 
@@ -564,16 +566,29 @@ export function WorkFormWizardModal({
                 Mendukung tautan berbagi Google Drive (ID gambar akan diambil otomatis). Jika dikosongkan, sistem otomatis memakai gambar sampul resmi BAKARYA Gugus 2 HSU.
               </p>
             </div>
+
+            {/* Kotak Petunjuk Status & Alur Publikasi */}
+            <div className="bg-[#14213D]/5 rounded-2xl p-4 border border-[#14213D]/10 text-xs space-y-1.5 text-[#14213D]">
+              <span className="font-extrabold flex items-center gap-1.5 text-[#167D78]">
+                <Sparkles className="w-3.5 h-3.5" />
+                Status & Alur Publikasi Karya
+              </span>
+              <p className="text-[#727782] leading-relaxed">
+                {userRole === "admin" || userRole === "superAdmin"
+                  ? "Sebagai Admin / Super Admin, Anda dapat langsung memilih 'Terbitkan Langsung' agar karya langsung tayang di Beranda & Jelajah publik, atau menyimpannya sebagai Draf / Masuk Antrean."
+                  : "Karya yang diajukan kurasi akan masuk ke antrean kurator dan dapat Anda pantau statusnya di menu Dashboard. Setelah disetujui kurator, karya otomatis tayang resmi di Beranda."}
+              </p>
+            </div>
           </div>
         )}
 
         {/* Modal Footer Controls */}
-        <div className="flex items-center justify-between pt-4 border-t border-[#14213D]/10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-[#14213D]/10">
           {step > 1 ? (
             <button
               type="button"
               onClick={() => setStep(step - 1)}
-              className="px-4 py-2 rounded-xl border border-[#14213D]/15 text-xs font-bold hover:bg-gray-100"
+              className="px-4 py-2 rounded-xl border border-[#14213D]/15 text-xs font-bold hover:bg-gray-100 transition-colors"
             >
               Kembali
             </button>
@@ -584,38 +599,60 @@ export function WorkFormWizardModal({
             <button
               type="button"
               onClick={() => setStep(step + 1)}
-              className="px-5 py-2 rounded-xl bg-[#14213D] hover:bg-[#167D78] transition-colors text-white text-xs font-bold"
+              className="px-5 py-2.5 rounded-xl bg-[#14213D] hover:bg-[#167D78] transition-colors text-white text-xs font-bold shadow-sm"
             >
-              Lanjut
+              Lanjut ke Langkah 3
             </button>
           ) : (
-            <div className="flex items-center gap-2">
-              {initialData?.status === "published" ? (
-                <button
-                  type="button"
-                  onClick={() => validateAndSubmit(true)}
-                  className="px-6 py-2.5 rounded-xl bg-[#167D78] hover:bg-[#14213D] transition-colors text-white text-xs font-bold shadow-md flex items-center gap-1.5"
-                >
-                  <Check className="w-4 h-4" />
-                  <span>Simpan Perubahan</span>
-                </button>
-              ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => validateAndSubmit("draft")}
+                className="px-4 py-2.5 rounded-xl border border-[#14213D]/20 text-xs font-bold text-[#14213D] hover:bg-gray-100 flex items-center gap-1.5 transition-colors"
+                title="Simpan sebagai draf di Dashboard saya"
+              >
+                <FileText className="w-3.5 h-3.5 text-[#727782]" />
+                <span>Simpan Draf</span>
+              </button>
+
+              {userRole === "admin" || userRole === "superAdmin" ? (
                 <>
                   <button
                     type="button"
-                    onClick={() => validateAndSubmit(false)}
-                    className="px-4 py-2 rounded-xl border border-[#14213D]/15 text-xs font-bold hover:bg-gray-100"
+                    onClick={() => validateAndSubmit("review")}
+                    className="px-4 py-2.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold transition-colors"
+                    title="Simpan ke antrean moderasi kurator"
                   >
-                    Simpan Draf
+                    Antrean Kurasi
                   </button>
                   <button
                     type="button"
-                    onClick={() => validateAndSubmit(true)}
-                    className="px-5 py-2 rounded-xl bg-[#167D78] hover:bg-[#14213D] transition-colors text-white text-xs font-bold shadow-md"
+                    onClick={() => validateAndSubmit("publish")}
+                    className="px-5 py-2.5 rounded-xl bg-[#167D78] hover:bg-[#14213D] transition-colors text-white text-xs font-bold shadow-md flex items-center gap-1.5"
+                    title="Terbitkan langsung ke Beranda publik"
                   >
-                    {initialData ? "Simpan & Ajukan Kurasi" : "Ajukan Kurasi"}
+                    <Sparkles className="w-4 h-4 text-[#F2B84B]" />
+                    <span>Terbitkan Langsung</span>
                   </button>
                 </>
+              ) : initialData?.status === "published" ? (
+                <button
+                  type="button"
+                  onClick={() => validateAndSubmit("publish")}
+                  className="px-5 py-2.5 rounded-xl bg-[#167D78] hover:bg-[#14213D] transition-colors text-white text-xs font-bold shadow-md flex items-center gap-1.5"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Simpan Perubahan (Tetap Terbit)</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => validateAndSubmit("review")}
+                  className="px-5 py-2.5 rounded-xl bg-[#167D78] hover:bg-[#14213D] transition-colors text-white text-xs font-bold shadow-md flex items-center gap-1.5"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>{initialData ? "Simpan & Ajukan Kurasi" : "Ajukan Kurasi ke Admin"}</span>
+                </button>
               )}
             </div>
           )}

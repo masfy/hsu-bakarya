@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Search, Filter, RotateCcw } from "lucide-react";
+import { Search, Filter, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Work,
   UserAccount,
@@ -62,6 +62,29 @@ export function ExploreView({
   onShareWork,
   onSelectContributor,
 }: ExploreViewProps) {
+  const [explorePage, setExplorePage] = useState(1);
+  const [showAllInExplore, setShowAllInExplore] = useState(false);
+
+  const ITEMS_PER_PAGE = 9;
+  const totalPages = Math.ceil(filteredPublicWorks.length / ITEMS_PER_PAGE) || 1;
+  const safePage = Math.min(Math.max(explorePage, 1), totalPages);
+  const startIndex = (safePage - 1) * ITEMS_PER_PAGE;
+  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredPublicWorks.length);
+  const paginatedWorks = showAllInExplore
+    ? filteredPublicWorks
+    : filteredPublicWorks.slice(startIndex, endIndex);
+
+  useEffect(() => {
+    setExplorePage(1);
+  }, [
+    searchQuery,
+    selectedLevel,
+    selectedClass,
+    selectedSubject,
+    selectedCategory,
+    selectedMediaType,
+    selectedContributorFilter,
+  ]);
   return (
     <motion.div
       key="jelajah"
@@ -241,20 +264,107 @@ export function ExploreView({
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPublicWorks.map((work) => (
-            <WorkCard
-              key={work.id}
-              work={work}
-              mediaTypesList={mediaTypesList}
-              onSelect={() => onOpenWorkDetail(work)}
-              onShare={onShareWork}
-              onSelectContributor={(contribId) => {
-                const found = usersList.find((c) => c.uid === contribId);
-                if (found) onSelectContributor(found);
-              }}
-            />
-          ))}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginatedWorks.map((work) => (
+              <WorkCard
+                key={work.id}
+                work={work}
+                mediaTypesList={mediaTypesList}
+                onSelect={() => onOpenWorkDetail(work)}
+                onShare={onShareWork}
+                onSelectContributor={(contribId) => {
+                  const found = usersList.find((c) => c.uid === contribId);
+                  if (found) onSelectContributor(found);
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Navigasi Paginasi Jelajah */}
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#14213D]/10">
+            <div className="text-xs text-[#727782] font-medium text-center sm:text-left">
+              Menampilkan{" "}
+              <strong className="text-[#14213D]">
+                {startIndex + 1} - {endIndex}
+              </strong>{" "}
+              dari <strong className="text-[#14213D]">{filteredPublicWorks.length}</strong> karya
+              terkurasi
+            </div>
+
+            {filteredPublicWorks.length > ITEMS_PER_PAGE && !showAllInExplore && (
+              <div className="flex items-center gap-1.5 bg-white p-1 rounded-2xl border border-[#14213D]/10 shadow-sm">
+                <button
+                  type="button"
+                  disabled={safePage <= 1}
+                  onClick={() => {
+                    setExplorePage((p) => Math.max(p - 1, 1));
+                    window.scrollTo({ top: 120, behavior: "smooth" });
+                  }}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 transition-all ${
+                    safePage <= 1
+                      ? "text-gray-300 cursor-not-allowed"
+                      : "text-[#14213D] hover:bg-[#F8F7F2] active:scale-95"
+                  }`}
+                  title="Halaman Sebelumnya"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline">Sebelumnya</span>
+                </button>
+
+                <div className="flex items-center gap-1 px-1">
+                  {Array.from({ length: totalPages }).map((_, idx) => {
+                    const pageNum = idx + 1;
+                    return (
+                      <button
+                        key={pageNum}
+                        type="button"
+                        onClick={() => {
+                          setExplorePage(pageNum);
+                          window.scrollTo({ top: 120, behavior: "smooth" });
+                        }}
+                        className={`w-8 h-8 rounded-xl text-xs font-extrabold transition-all ${
+                          safePage === pageNum
+                            ? "bg-[#14213D] text-white shadow-sm"
+                            : "text-[#727782] hover:bg-[#F8F7F2] hover:text-[#14213D]"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  type="button"
+                  disabled={safePage >= totalPages}
+                  onClick={() => {
+                    setExplorePage((p) => Math.min(p + 1, totalPages));
+                    window.scrollTo({ top: 120, behavior: "smooth" });
+                  }}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 transition-all ${
+                    safePage >= totalPages
+                      ? "text-gray-300 cursor-not-allowed"
+                      : "text-[#14213D] hover:bg-[#F8F7F2] active:scale-95"
+                  }`}
+                  title="Halaman Selanjutnya"
+                >
+                  <span className="hidden sm:inline">Selanjutnya</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            {filteredPublicWorks.length > ITEMS_PER_PAGE && (
+              <button
+                type="button"
+                onClick={() => setShowAllInExplore(!showAllInExplore)}
+                className="px-3.5 py-2.5 rounded-xl border border-[#14213D]/15 text-xs font-bold text-[#727782] hover:text-[#14213D] hover:bg-white transition-colors"
+              >
+                {showAllInExplore ? "Tampilkan Per Halaman (9)" : "Tampilkan Semua Sekaligus"}
+              </button>
+            )}
+          </div>
         </div>
       )}
     </motion.div>

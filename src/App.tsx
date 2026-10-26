@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { AnimatePresence } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import {
@@ -33,10 +33,12 @@ import {
   BAKARYA_DEFAULT_THUMBNAIL_URL,
 } from "./utils/drive";
 import { getWorkEffectiveTime, getWorkApprovalTime } from "./utils/date";
-import { auth, isFirebaseConfigured } from "./services/firebase";
+import { auth, isFirebaseConfigured, googleProvider } from "./services/firebase";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInWithPopup,
+  sendPasswordResetEmail,
   onAuthStateChanged,
   signOut,
 } from "firebase/auth";
@@ -87,6 +89,18 @@ import { ArchitectureView } from "./views/ArchitectureView";
 
 // Batas Waktu Inaktivitas Akun: 30 Menit (1.800.000 ms)
 const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
+
+// Helper validasi email Super Admin portal BAKARYA
+export const isSuperAdminEmail = (email?: string | null): boolean => {
+  if (!email) return false;
+  const normalized = email.trim().toLowerCase();
+  const configuredAdmin = import.meta.env.VITE_SUPERADMIN_EMAIL?.trim().toLowerCase();
+  return (
+    normalized === "alfyarnaim@gmail.com" ||
+    normalized === "admin@bakarya.hsu.go.id" ||
+    Boolean(configuredAdmin && normalized === configuredAdmin)
+  );
+};
 
 export default function App() {
   const [role, setRole] = useState<UserRole>(() => {
@@ -165,7 +179,17 @@ export default function App() {
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.filter((u: UserAccount) => !deletedUids.includes(u.uid) && !u.isDeleted);
+          // Bersihkan tempPassword lawas dari localStorage agar tidak mengunci pengguna
+          return parsed
+            .filter((u: UserAccount) => !deletedUids.includes(u.uid) && !u.isDeleted)
+            .map((u: UserAccount) => {
+              const { tempPassword, ...safe } = u;
+              if (isSuperAdminEmail(safe.email)) {
+                safe.role = "superAdmin";
+                safe.accountStatus = "active";
+              }
+              return safe;
+            });
         }
       }
     } catch {}
@@ -368,8 +392,10 @@ export default function App() {
         const userEmail = firebaseUser.email?.toLowerCase();
         console.log("🔥 Sesi Firebase Auth terdeteksi aktif:", userEmail);
 
+        const isSuper = isSuperAdminEmail(userEmail);
+
         let found = usersList.find(
-          (u) => u.uid === firebaseUser.uid || (userEmail && u.email.toLowerCase() === userEmail)
+          (u) => u.uid === firebaseUser.uid || (userEmail && Boolean(u.email) && u.email.toLowerCase() === userEmail)
         );
 
         if (!found) {
@@ -377,40 +403,45 @@ export default function App() {
           if (remoteUsers) {
             setUsersList(remoteUsers);
             found = remoteUsers.find(
-              (u) => u.uid === firebaseUser.uid || (userEmail && u.email.toLowerCase() === userEmail)
+              (u) => u.uid === firebaseUser.uid || (userEmail && Boolean(u.email) && u.email.toLowerCase() === userEmail)
             );
           }
         }
 
-        if (found) {
-          if (found.accountStatus === "active") {
-            setLoggedInUserUid(found.uid);
-            setRole(found.role);
-            try {
-              localStorage.setItem("bakarya_user_uid", found.uid);
-              localStorage.setItem("bakarya_user_role", found.role);
-              if (!lastActiveStr) {
-                localStorage.setItem("bakarya_last_activity_time", Date.now().toString());
-              }
-            } catch {}
-          }
-        } else if (
-          (import.meta.env.VITE_SUPERADMIN_EMAIL &&
-            userEmail === import.meta.env.VITE_SUPERADMIN_EMAIL.toLowerCase()) ||
-          userEmail === "admin@bakarya.hsu.go.id"
-        ) {
-          const superAdminUid =
-            usersList.find((u) => u.role === "superAdmin")?.uid || "uid-super-admin";
-          setRole("superAdmin");
-          setLoggedInUserUid(superAdminUid);
-          try {
-            localStorage.setItem("bakarya_user_uid", superAdminUid);
-            localStorage.setItem("bakarya_user_role", "superAdmin");
-            if (!lastActiveStr) {
-              localStorage.setItem("bakarya_last_activity_time", Date.now().toString());
-            }
-          } catch {}
+        const effectiveRole: UserRole = isSuper ? "superAdmin" : (found?.role || "contributor");
+        const effectiveUid = found?.uid || firebaseUser.uid;
+
+        if (!found && isSuper) {
+          found = {
+            uid: firebaseUser.uid,
+            username: userEmail?.split("@")[0].replace(/[^a-z0-9.]/g, "") || "alfyarnaim",
+            displayName: firebaseUser.displayName || "Alfyar Naim",
+            email: userEmail || "alfyarnaim@gmail.com",
+            institution: "Fasilitator Digitalisasi Gugus 2 HSU",
+            district: "Amuntai Tengah",
+            bio: "Fasilitator Digitalisasi & Super Admin Pengelola Utama Portal Pembelajaran Digital BAKARYA Gugus 2 HSU.",
+            role: "superAdmin",
+            accountStatus: "active",
+            publicProfileEnabled: true,
+            isDeleted: false,
+            deletedAt: null,
+            deletedBy: null,
+            lastLoginAt: new Date().toLocaleString("id-ID"),
+            avatar: firebaseUser.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+          };
+          saveUserToFirestore(found);
+          setUsersList((prev) => [found!, ...prev.filter((u) => u.uid !== found!.uid)]);
         }
+
+        setLoggedInUserUid(effectiveUid);
+        setRole(effectiveRole);
+        try {
+          localStorage.setItem("bakarya_user_uid", effectiveUid);
+          localStorage.setItem("bakarya_user_role", effectiveRole);
+          if (!lastActiveStr) {
+            localStorage.setItem("bakarya_last_activity_time", Date.now().toString());
+          }
+        } catch {}
       }
     });
 
@@ -658,12 +689,18 @@ export default function App() {
     return usersList.filter((u) => !u.isDeleted && u.accountStatus === "pending").length;
   }, [usersList]);
 
+  const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
   const triggerToast = (message: string, type: "info" | "success" | "error" | "warning" = "info") => {
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
     setToast({ message, type });
-    setTimeout(() => {
+    const duration = type === "error" ? 6500 : 4500;
+    toastTimerRef.current = setTimeout(() => {
       setToast(null);
-    }, 4200);
+    }, duration);
   };
+
 
   const handleAddCustomSubject = (rawName: string) => {
     const clean = rawName.trim();
@@ -716,96 +753,171 @@ export default function App() {
     displayName: string;
     institution: string;
     district: string;
-  }) => {
-    const nowWITA = "16 Okt 2026, 22:00 WITA";
+  }): Promise<{ success: boolean; message: string; code?: string }> => {
+    const nowWITA = new Date().toLocaleString("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }) + " WITA";
     const normalizedEmail = payload.email.trim().toLowerCase();
+    const isSuper = isSuperAdminEmail(normalizedEmail);
     const existing = usersList.find(
-      (u) => !u.isDeleted && u.email.toLowerCase() === normalizedEmail
+      (u) => !u.isDeleted && Boolean(u.email) && u.email.toLowerCase() === normalizedEmail
     );
 
     if (payload.mode === "login") {
-      let targetUser = existing;
+      // A. Jika Firebase aktif, gunakan Firebase Auth sebagai verifikator kata sandi utama
+      if (isFirebaseConfigured && auth && payload.password) {
+        try {
+          const authUser = await signInWithEmailAndPassword(auth, normalizedEmail, payload.password);
+          console.log("🔥 Berhasil masuk ke sesi Firebase Auth:", normalizedEmail);
 
-      // Jika user belum ada di state lokal tapi Firebase terhubung, coba cek Firebase Auth & Firestore
-      if (!targetUser && isFirebaseConfigured) {
-        if (auth && payload.password) {
-          try {
-            const authUser = await signInWithEmailAndPassword(auth, normalizedEmail, payload.password);
+          let targetUser = usersList.find(
+            (u) => !u.isDeleted && ((Boolean(u.email) && u.email.toLowerCase() === normalizedEmail) || u.uid === authUser.user.uid)
+          );
+
+          if (!targetUser) {
             const remoteUsers = await fetchUsersFromFirestore();
             if (remoteUsers) {
               setUsersList(remoteUsers);
               targetUser = remoteUsers.find(
-                (u) => u.email.toLowerCase() === normalizedEmail || u.uid === authUser.user.uid
+                (u) => !u.isDeleted && ((Boolean(u.email) && u.email.toLowerCase() === normalizedEmail) || u.uid === authUser.user.uid)
               );
             }
-          } catch (e: any) {
-            console.warn("Gagal login Firebase Auth langsung:", e);
           }
+
+          const targetRole: UserRole = isSuper ? "superAdmin" : (targetUser?.role || "contributor");
+          const targetUid = targetUser?.uid || authUser.user.uid;
+
+          if (!targetUser) {
+            targetUser = {
+              uid: targetUid,
+              username: normalizedEmail.split("@")[0].replace(/[^a-z0-9.]/g, "") || "admin",
+              displayName: authUser.user.displayName || (isSuper ? "Alfyar Naim" : "Pendidik Banua"),
+              email: normalizedEmail,
+              institution: isSuper ? "Fasilitator Digitalisasi Gugus 2 HSU" : (payload.institution || "Gugus 2 HSU"),
+              district: payload.district || "Amuntai Tengah",
+              bio: isSuper ? "Fasilitator Digitalisasi & Super Admin Pengelola Utama Portal BAKARYA." : "Kontributor BAKARYA",
+              role: targetRole,
+              accountStatus: "active",
+              publicProfileEnabled: true,
+              isDeleted: false,
+              deletedAt: null,
+              deletedBy: null,
+              lastLoginAt: nowWITA,
+              avatar: authUser.user.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+            };
+            saveUserToFirestore(targetUser);
+            setUsersList((prev) => [targetUser!, ...prev.filter((u) => u.uid !== targetUid)]);
+          } else {
+            if (targetUser.tempPassword) {
+              delete targetUser.tempPassword;
+            }
+            if (isSuper && targetUser.role !== "superAdmin") {
+              targetUser = { ...targetUser, role: "superAdmin" };
+              saveUserToFirestore(targetUser);
+            }
+            setUsersList((prev) =>
+              prev.map((u) => (u.uid === targetUser!.uid ? { ...targetUser!, lastLoginAt: nowWITA } : u))
+            );
+          }
+
+          setLoggedInUserUid(targetUid);
+          setRole(targetRole);
+          try {
+            localStorage.setItem("bakarya_user_uid", targetUid);
+            localStorage.setItem("bakarya_user_role", targetRole);
+            localStorage.setItem("bakarya_last_activity_time", Date.now().toString());
+          } catch {}
+
+          setActiveTab("dashboard");
+          setIsAuthModalOpen(false);
+          const successMsg = `Berhasil masuk! Selamat datang kembali, ${targetUser.displayName}${targetRole === "superAdmin" ? " (Super Admin)" : ""}.`;
+          triggerToast(successMsg, "success");
+          return { success: true, message: successMsg };
+        } catch (authErr: any) {
+          console.error("Gagal login Firebase Auth:", authErr);
+          let msg = "Gagal masuk. Periksa kembali email dan kata sandi Anda.";
+          if (authErr.code === "auth/invalid-credential" || authErr.code === "auth/wrong-password") {
+            msg = "Email atau kata sandi tidak cocok di Firebase Authentication. Pastikan password sesuai dengan akun Firebase Anda (atau gunakan tombol 'Masuk Cepat dengan Akun Google').";
+          } else if (authErr.code === "auth/user-not-found") {
+            msg = "Akun dengan email ini belum terdaftar di Firebase Authentication. Daftarkan di Firebase Console atau via tab 'Daftar'.";
+          } else if (authErr.code === "auth/operation-not-allowed") {
+            msg = "Metode Email/Password belum diaktifkan di Firebase Console > Authentication > Sign-in method.";
+          } else if (authErr.code === "auth/too-many-requests") {
+            msg = "Terlalu banyak percobaan gagal. Firebase memblokir sementara akun demi keamanan. Coba lagi dalam beberapa menit.";
+          } else if (authErr.code === "auth/network-request-failed") {
+            msg = "Gagal menghubungi server Firebase. Periksa koneksi internet Anda.";
+          } else if (authErr.code === "auth/invalid-email") {
+            msg = "Format email tidak valid. Masukkan format email yang benar.";
+          } else if (authErr.code === "auth/user-disabled") {
+            msg = "Akun ini telah dinonaktifkan di Firebase Console.";
+          } else if (authErr.message) {
+            msg = authErr.message;
+          }
+          triggerToast(msg, "error");
+          return { success: false, message: msg, code: authErr.code };
         }
+      }
+
+      // B. Mode Demo Lokal (Jika Firebase tidak aktif)
+      let targetUser = existing;
+
+      if (!targetUser && isSuper) {
+        targetUser = {
+          uid: "uid-super-admin",
+          username: normalizedEmail.split("@")[0].replace(/[^a-z0-9.]/g, "") || "alfyarnaim",
+          displayName: "Alfyar Naim",
+          email: normalizedEmail,
+          institution: "Fasilitator Digitalisasi Gugus 2 HSU",
+          district: "Amuntai Tengah",
+          bio: "Fasilitator Digitalisasi & Super Admin Pengelola Utama Portal Pembelajaran Digital BAKARYA Gugus 2 HSU.",
+          role: "superAdmin",
+          accountStatus: "active",
+          publicProfileEnabled: true,
+          isDeleted: false,
+          deletedAt: null,
+          deletedBy: null,
+          lastLoginAt: nowWITA,
+          avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+        };
+        setUsersList((prev) => [targetUser!, ...prev]);
       }
 
       if (!targetUser) {
-        triggerToast(
-          "Email belum terdaftar. Silakan gunakan tab 'Daftar' untuk membuat akun baru.",
-          "error"
-        );
-        return;
-      }
-
-      // Validasi kata sandi jika user mengisi atau akun memiliki kata sandi terdaftar
-      if (payload.password && targetUser.tempPassword) {
-        if (payload.password !== targetUser.tempPassword) {
-          triggerToast("Kata sandi yang Anda masukkan salah. Silakan coba lagi.", "error");
-          return;
-        }
+        const msg = "Email belum terdaftar. Silakan gunakan tab 'Daftar' untuk membuat akun baru.";
+        triggerToast(msg, "error");
+        return { success: false, message: msg };
       }
 
       if (targetUser.accountStatus === "pending") {
-        triggerToast(
-          `Halo ${targetUser.displayName}, akun Anda masih menunggu persetujuan Admin Kurator.`,
-          "info"
-        );
-        return;
+        const msg = `Halo ${targetUser.displayName}, akun Anda masih menunggu persetujuan Admin Kurator.`;
+        triggerToast(msg, "info");
+        return { success: false, message: msg };
       }
       if (targetUser.accountStatus !== "active") {
-        triggerToast("Akses akun ini sedang dibekukan oleh Admin.", "error");
-        return;
+        const msg = "Akses akun ini sedang dibekukan oleh Admin.";
+        triggerToast(msg, "error");
+        return { success: false, message: msg };
       }
 
-      // Otentikasi sesi live ke Firebase Auth jika aktif
-      if (isFirebaseConfigured && auth && payload.password) {
-        try {
-          await signInWithEmailAndPassword(auth, normalizedEmail, payload.password);
-          console.log("🔥 Berhasil masuk ke sesi Firebase Auth:", normalizedEmail);
-        } catch (authErr: any) {
-          if (
-            authErr.code === "auth/user-not-found" ||
-            authErr.code === "auth/invalid-credential"
-          ) {
-            try {
-              await createUserWithEmailAndPassword(auth, normalizedEmail, payload.password);
-              console.log("🔥 Berhasil membuat sesi Firebase Auth baru:", normalizedEmail);
-            } catch (createErr) {
-              console.warn("Gagal auto-create Firebase Auth:", createErr);
-            }
-          }
-        }
-      }
+      const targetRole: UserRole = isSuper ? "superAdmin" : targetUser.role;
 
       setUsersList((prev) =>
-        prev.map((u) => (u.uid === targetUser.uid ? { ...u, lastLoginAt: nowWITA } : u))
+        prev.map((u) => (u.uid === targetUser!.uid ? { ...u, role: targetRole, lastLoginAt: nowWITA } : u))
       );
       setLoggedInUserUid(targetUser.uid);
-      setRole(targetUser.role);
+      setRole(targetRole);
       try {
         localStorage.setItem("bakarya_user_uid", targetUser.uid);
-        localStorage.setItem("bakarya_user_role", targetUser.role);
+        localStorage.setItem("bakarya_user_role", targetRole);
         localStorage.setItem("bakarya_last_activity_time", Date.now().toString());
       } catch {}
+
       setActiveTab("dashboard");
       setIsAuthModalOpen(false);
-      triggerToast(`Selamat datang kembali, ${targetUser.displayName}!`, "success");
-      return;
+      const successMsg = `Selamat datang kembali, ${targetUser.displayName}! (${targetRole === "superAdmin" ? "Super Admin" : "Masuk"})`;
+      triggerToast(successMsg, "success");
+      return { success: true, message: successMsg };
     }
 
     // Register mode
@@ -820,14 +932,14 @@ export default function App() {
         } catch {}
         setActiveTab("dashboard");
         setIsAuthModalOpen(false);
-        triggerToast(`Akun Anda sudah aktif! Masuk sebagai ${existing.displayName}.`, "success");
+        const msg = `Akun Anda sudah aktif! Masuk sebagai ${existing.displayName}.`;
+        triggerToast(msg, "success");
+        return { success: true, message: msg };
       } else {
-        triggerToast(
-          `Akun ${existing.email} sudah terdaftar dan sedang menunggu persetujuan Admin.`,
-          "info"
-        );
+        const msg = `Akun ${existing.email} sudah terdaftar dan sedang menunggu persetujuan Admin.`;
+        triggerToast(msg, "info");
+        return { success: false, message: msg };
       }
-      return;
     }
 
     let newUid = "uid-google-" + Date.now();
@@ -845,12 +957,18 @@ export default function App() {
             const userCred = await signInWithEmailAndPassword(auth, normalizedEmail, payload.password);
             newUid = userCred.user.uid;
           } catch (loginErr) {
-            triggerToast("Alamat email ini sudah terdaftar di Firebase Auth. Silakan gunakan tab Masuk.", "error");
-            return;
+            const msg = "Alamat email ini sudah terdaftar di Firebase Auth. Silakan gunakan tab Masuk.";
+            triggerToast(msg, "error");
+            return { success: false, message: msg, code: authErr.code };
           }
         } else if (authErr.code === "auth/weak-password") {
-          triggerToast("Kata sandi terlalu pendek. Gunakan minimal 6 karakter.", "error");
-          return;
+          const msg = "Kata sandi terlalu pendek. Gunakan minimal 6 karakter.";
+          triggerToast(msg, "error");
+          return { success: false, message: msg, code: authErr.code };
+        } else {
+          const msg = authErr.message || "Gagal membuat akun di Firebase Authentication.";
+          triggerToast(msg, "error");
+          return { success: false, message: msg, code: authErr.code };
         }
       }
     }
@@ -880,11 +998,141 @@ export default function App() {
     }
 
     setIsAuthModalOpen(false);
-    triggerToast(
-      "Pendaftaran berhasil! Akun Anda sedang menunggu persetujuan Admin.",
-      "success"
-    );
+    const regMsg = "Pendaftaran berhasil! Akun Anda sedang menunggu persetujuan Admin Kurator.";
+    triggerToast(regMsg, "success");
+    return { success: true, message: regMsg };
   };
+
+  const handleGooglePopupAuth = async (): Promise<{ success: boolean; message?: string }> => {
+    if (!isFirebaseConfigured || !auth) {
+      const msg = "Firebase Authentication belum terkonfigurasi di sistem.";
+      triggerToast(msg, "error");
+      return { success: false, message: msg };
+    }
+
+    try {
+      const cred = await signInWithPopup(auth, googleProvider);
+      const googleUser = cred.user;
+      const userEmail = (googleUser.email || "").trim().toLowerCase();
+      const isSuper = isSuperAdminEmail(userEmail);
+
+      let targetUser = usersList.find(
+        (u) => !u.isDeleted && ((Boolean(u.email) && u.email.toLowerCase() === userEmail) || u.uid === googleUser.uid)
+      );
+
+      if (!targetUser) {
+        const remoteUsers = await fetchUsersFromFirestore();
+        if (remoteUsers) {
+          setUsersList(remoteUsers);
+          targetUser = remoteUsers.find(
+            (u) => !u.isDeleted && ((Boolean(u.email) && u.email.toLowerCase() === userEmail) || u.uid === googleUser.uid)
+          );
+        }
+      }
+
+
+      const targetRole: UserRole = isSuper ? "superAdmin" : (targetUser?.role || "contributor");
+      const targetUid = targetUser?.uid || googleUser.uid;
+      const nowWITA = new Date().toLocaleString("id-ID", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }) + " WITA";
+
+      if (!targetUser) {
+        targetUser = {
+          uid: targetUid,
+          username: userEmail.split("@")[0].replace(/[^a-z0-9.]/g, "") || "kontributor",
+          displayName: googleUser.displayName || (isSuper ? "Alfyar Naim" : "Pendidik Banua"),
+          email: userEmail,
+          institution: isSuper ? "Fasilitator Digitalisasi Gugus 2 HSU" : "Gugus 2 HSU",
+          district: "Amuntai Tengah",
+          bio: isSuper
+            ? "Fasilitator Digitalisasi & Super Admin Pengelola Utama Portal BAKARYA."
+            : "Pendidik Kontributor Inovasi Pembelajaran Digital Gugus 2 HSU.",
+          role: targetRole,
+          accountStatus: "active",
+          publicProfileEnabled: true,
+          isDeleted: false,
+          deletedAt: null,
+          deletedBy: null,
+          lastLoginAt: nowWITA,
+          avatar: googleUser.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+        };
+        saveUserToFirestore(targetUser);
+        setUsersList((prev) => [targetUser!, ...prev.filter((u) => u.uid !== targetUid)]);
+      } else {
+        if (isSuper && targetUser.role !== "superAdmin") {
+          targetUser = { ...targetUser, role: "superAdmin" };
+          saveUserToFirestore(targetUser);
+        }
+        setUsersList((prev) =>
+          prev.map((u) => (u.uid === targetUser!.uid ? { ...targetUser!, lastLoginAt: nowWITA } : u))
+        );
+      }
+
+      setLoggedInUserUid(targetUid);
+      setRole(targetRole);
+      try {
+        localStorage.setItem("bakarya_user_uid", targetUid);
+        localStorage.setItem("bakarya_user_role", targetRole);
+        localStorage.setItem("bakarya_last_activity_time", Date.now().toString());
+      } catch {}
+
+      setActiveTab("dashboard");
+      setIsAuthModalOpen(false);
+      const successMsg = `Berhasil masuk dengan Akun Google: ${userEmail} (${targetRole === "superAdmin" ? "Super Admin" : "Akses Aktif"})!`;
+      triggerToast(successMsg, "success");
+      return { success: true, message: successMsg };
+    } catch (err: any) {
+      console.error("Popup Google Auth gagal:", err);
+      let msg = "Gagal masuk menggunakan Akun Google.";
+      if (err.code === "auth/popup-closed-by-user") {
+        msg = "Jendela login Google ditutup sebelum proses selesai.";
+      } else if (err.code === "auth/popup-blocked") {
+        msg = "Jendela popup Google diblokir oleh browser. Izinkan pop-up pada peramban Anda.";
+      } else if (err.code === "auth/cancelled-popup-request") {
+        msg = "Proses login Google dibatalkan.";
+      } else if (err.code === "auth/network-request-failed") {
+        msg = "Gagal terhubung ke Google. Periksa koneksi internet Anda.";
+      } else if (err.message) {
+        msg = err.message;
+      }
+      triggerToast(msg, "error");
+      return { success: false, message: msg };
+    }
+  };
+
+  const handleForgotPassword = async (email: string): Promise<{ success: boolean; message: string }> => {
+    if (!email || !email.includes("@")) {
+      const msg = "Masukkan alamat email yang valid untuk menerima link reset kata sandi.";
+      triggerToast(msg, "warning");
+      return { success: false, message: msg };
+    }
+    if (!isFirebaseConfigured || !auth) {
+      const msg = "Firebase Authentication belum aktif.";
+      triggerToast(msg, "error");
+      return { success: false, message: msg };
+    }
+    try {
+      await sendPasswordResetEmail(auth, email.trim().toLowerCase());
+      const msg = `Link reset kata sandi berhasil dikirim ke ${email}! Silakan periksa inbox / spam email Anda.`;
+      triggerToast(msg, "success");
+      return { success: true, message: msg };
+    } catch (err: any) {
+      console.error("Gagal kirim reset email:", err);
+      let msg = "Gagal mengirim link reset kata sandi.";
+      if (err.code === "auth/user-not-found") {
+        msg = "Email belum terdaftar di Firebase Authentication.";
+      } else if (err.code === "auth/invalid-email") {
+        msg = "Format email tidak valid.";
+      } else if (err.message) {
+        msg = err.message;
+      }
+      triggerToast(msg, "error");
+      return { success: false, message: msg };
+    }
+  };
+
 
   const handleUpdateUserRole = (targetUid: string, newRole: UserRole) => {
     if (role !== "superAdmin" && role !== "admin") {
@@ -1160,7 +1408,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#F8F7F2] text-[#20252D] font-sans selection:bg-[#167D78] selection:text-white flex flex-col justify-between w-full max-w-full overflow-x-hidden">
       {/* Toast Notification */}
-      <ToastNotification toast={toast} />
+      <ToastNotification toast={toast} onDismiss={() => setToast(null)} />
 
       {/* Header / Navbar */}
       <Navbar
@@ -1606,6 +1854,8 @@ export default function App() {
             usersList={usersList}
             onClose={() => setIsAuthModalOpen(false)}
             onSubmitAuth={handleGoogleLoginOrRegister}
+            onGooglePopupAuth={isFirebaseConfigured && auth ? handleGooglePopupAuth : undefined}
+            onForgotPassword={isFirebaseConfigured && auth ? handleForgotPassword : undefined}
           />
         )}
       </AnimatePresence>

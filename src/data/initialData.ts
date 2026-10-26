@@ -218,10 +218,10 @@ export const CONTRIBUTORS: UserAccount[] = [
   },
   {
     uid: "uid-super-admin",
-    username: "superadmin.bakarya",
-    displayName: "Super Administrator BAKARYA",
-    email: "admin@bakarya.hsu.go.id",
-    institution: "Disdikbud Kab. HSU",
+    username: "alfyarnaim",
+    displayName: "Alfyar Naim",
+    email: "alfyarnaim@gmail.com",
+    institution: "Fasilitator Digitalisasi Gugus 2 HSU",
     district: "Amuntai Tengah",
     bio: "Fasilitator Digitalisasi & Super Admin Pengelola Utama Portal Pembelajaran Digital BAKARYA Gugus 2 HSU.",
     role: "superAdmin",
@@ -234,6 +234,7 @@ export const CONTRIBUTORS: UserAccount[] = [
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
   },
 ];
+
 
 
 export const INITIAL_WORKS: Work[] = [

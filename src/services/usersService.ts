@@ -26,7 +26,7 @@ export async function fetchUsersFromFirestore(): Promise<UserAccount[] | null> {
       const uid = d.id;
       // Jangan masukkan jika akun berstatus isDeleted di Firestore atau ada dalam daftar akun terhapus
       if (!data.isDeleted && !deletedUids.includes(uid) && !deletedUids.includes(data.uid)) {
-        list.push({ uid, ...data });
+        list.push({ uid, ...data, email: data.email || "" });
       }
     });
     return list;

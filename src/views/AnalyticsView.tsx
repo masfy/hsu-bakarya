@@ -161,7 +161,7 @@ export function AnalyticsView({
             Statistik & Analitik Pembelajaran Digital
           </h1>
           <p className="text-xs sm:text-sm text-white/75 mt-1 max-w-2xl">
-            Capaian transparansi pemanfaatan repositori digital karya Guru Banua Kalimantan Selatan bersama Mitra BPMP Provinsi Kalimantan Selatan.
+            Capaian transparansi pemanfaatan repositori karya inovatif Guru Banua Kalimantan Selatan: dari guru, oleh guru, dan untuk guru.
           </p>
         </div>
 

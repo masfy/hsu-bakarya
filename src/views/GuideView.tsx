@@ -26,12 +26,8 @@ export function GuideView() {
             <strong>BAKARYA (Banua Berkarya Digital)</strong> hadir sebagai wadah kolaborasi kreasi media pembelajaran digital persembahan{" "}
             <strong className="text-[#F2B84B]">
               Guru Banua di Kalimantan Selatan
-            </strong>{" "}
-            bersama{" "}
-            <strong className="text-emerald-300">
-              Mitra BPMP Provinsi Kalimantan Selatan
             </strong>
-            . Portal ini dikembangkan secara terbuka agar seluruh pendidik dapat saling berbagi media pembelajaran yang berkualitas, kontekstual, dan menginspirasi kelas.
+            . Gerakan murni mulai dari guru, oleh guru, dan untuk guru agar seluruh pendidik dapat saling berbagi media pembelajaran yang berkualitas, kontekstual, dan menginspirasi kelas.
           </p>
         </div>
       </div>
@@ -80,7 +76,7 @@ export function GuideView() {
               Kirim & Terbit ke Publik
             </h3>
             <p className="text-xs text-[#727782] leading-relaxed">
-              Isi judul, jenjang, mapel, dan tempel tautan karya. Tim Kurator Mitra BPMP Provinsi Kalimantan Selatan akan memoderasi sebelum karya resmi diterbitkan.
+              Isi judul, jenjang, mapel, dan tempel tautan karya. Tim Kurator Guru Banua Kalimantan Selatan akan memoderasi sebelum karya resmi diterbitkan.
             </p>
           </div>
         </div>

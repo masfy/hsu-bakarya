@@ -84,7 +84,7 @@ export function DashboardView({
               Transparansi Capaian Digitalisasi Pembelajaran Banua
             </h1>
             <p className="text-xs sm:text-sm text-white/80 leading-relaxed">
-              Memantau pemanfaatan dan publikasi media pembelajaran interaktif karya pendidik di Kalimantan Selatan bersama Mitra BPMP Provinsi Kalimantan Selatan.
+              Memantau pemanfaatan dan publikasi media pembelajaran interaktif: dari guru, oleh guru, dan untuk guru di Kalimantan Selatan.
             </p>
           </div>
 
@@ -280,7 +280,7 @@ export function DashboardView({
               </div>
               <h3 className="font-display text-sm font-bold">Kurasi & Terbit Resmi</h3>
               <p className="text-xs text-white/75 leading-relaxed">
-                Tim kurator bersama Mitra BPMP Provinsi Kalimantan Selatan meninjau kelayakan media serta keamanan tautan sebelum diterbitkan.
+                Tim kurator pendidik meninjau kelayakan media serta keamanan tautan sebelum karya resmi diterbitkan ke publik.
               </p>
             </div>
           </div>
@@ -351,7 +351,7 @@ export function DashboardView({
                 {role === "contributor"
                   ? "Kontributor Guru Banua"
                   : role === "admin"
-                  ? "Admin Kurator Mitra BPMP"
+                  ? "Admin Kurator Guru Banua"
                   : "Super Admin Pengelola"}
               </span>
             </div>
@@ -443,7 +443,7 @@ export function DashboardView({
             <p className="text-xs text-[#727782]">
               {role === "contributor"
                 ? "Anda dapat memperbarui draf atau menanggapi revisi kurator."
-                : "Tim Kurator bersama Mitra BPMP Kalsel meninjau kesesuaian media pembelajaran mulai dari yang paling baru diajukan."}
+                : "Tim Kurator Guru Banua meninjau kesesuaian media pembelajaran mulai dari yang paling baru diajukan."}
             </p>
           </div>
         </div>

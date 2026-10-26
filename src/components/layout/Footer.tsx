@@ -31,7 +31,7 @@ export function Footer({ setActiveTab }: FooterProps) {
               </div>
             </div>
             <p className="text-xs text-[#727782] leading-relaxed max-w-md">
-              Portal repositori dan kurasi media pembelajaran digital interaktif persembahan Guru Banua di Kalimantan Selatan bersama Mitra BPMP Provinsi Kalimantan Selatan. Mendorong transformasi pembelajaran yang hidup, bermakna, dan berakar pada kearifan lokal.
+              Portal repositori dan kurasi media pembelajaran digital interaktif ciptaan Guru Banua di Kalimantan Selatan. Gerakan mandiri dari guru, oleh guru, dan untuk guru demi transformasi pembelajaran yang hidup, bermakna, serta berakar kearifan lokal.
             </p>
             <div className="flex items-center gap-2 text-[11px] font-bold text-[#167D78]">
               <Sparkles className="w-3.5 h-3.5 text-[#F2B84B]" />
@@ -85,10 +85,10 @@ export function Footer({ setActiveTab }: FooterProps) {
 
           <div>
             <h4 className="text-xs font-extrabold uppercase tracking-wider text-[#14213D] mb-3">
-              Mitra & Kolaborasi
+              Semangat Kolaborasi
             </h4>
             <p className="text-xs text-[#727782] leading-relaxed">
-              Mitra BPMP Provinsi Kalimantan Selatan • Kolaborasi Inovasi & Penjaminan Mutu Pembelajaran Digital Banua.
+              Mulai guru, dari guru, dan untuk guru di Kalimantan Selatan. Wadah terbuka untuk saling berbagi dan menginspirasi karya media pembelajaran digital Banua.
             </p>
             <div className="mt-4 pt-3 border-t border-[#14213D]/10 text-[11px] text-[#727782]">
               Didukung oleh <strong>Cloud Firestore</strong> & <strong>Vercel Edge</strong>.

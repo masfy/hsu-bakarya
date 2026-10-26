@@ -252,12 +252,8 @@ export function HomeView({
               Ruang kurasi dan berbagi media pembelajaran interaktif persembahan{" "}
               <strong className="text-[#F2B84B]">
                 Guru Banua di Kalimantan Selatan
-              </strong>{" "}
-              bersama{" "}
-              <strong className="text-emerald-300">
-                Mitra BPMP Provinsi Kalimantan Selatan
               </strong>
-              . Menyalakan suasana belajar kelas dengan karya kontekstual, kreatif, dan berdampak nyata.
+              . Gerakan murni mulai dari guru, oleh guru, dan untuk guru guna menyalakan suasana belajar kelas dengan karya kontekstual, kreatif, dan berdampak nyata.
             </motion.p>
 
             <motion.div
@@ -421,7 +417,7 @@ export function HomeView({
               Dampak & Kunjungan Portal Pembelajaran
             </h2>
             <p className="text-xs sm:text-sm text-[#727782] max-w-2xl mt-1 leading-relaxed">
-              Transparansi jejak interaksi dan pemanfaatan karya media digital kreasi Guru Banua se-Kalimantan Selatan bersama Mitra BPMP Provinsi Kalimantan Selatan.
+              Transparansi jejak interaksi dan pemanfaatan karya media digital kreasi Guru Banua se-Kalimantan Selatan: dari guru, oleh guru, dan untuk guru.
             </p>
           </div>
 

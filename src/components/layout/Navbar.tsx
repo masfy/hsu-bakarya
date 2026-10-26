@@ -104,7 +104,7 @@ export function Navbar({
               </span>
             </div>
             <p className="text-[11px] text-[#727782] hidden md:block font-medium truncate">
-              Inovasi Media Pendidik Kalimantan Selatan • Mitra BPMP Kalsel
+              Inovasi Media Pendidik • Dari Guru, Oleh Guru, Untuk Guru Banua
             </p>
           </div>
         </div>

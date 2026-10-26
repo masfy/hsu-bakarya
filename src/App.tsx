@@ -269,7 +269,7 @@ export default function App() {
             id: "mod-log-1",
             workId: "work-106",
             workTitle: "Kamus Visual Bersuara Bahasa Banjar Hulu — Indonesia untuk PAUD",
-            actorName: "Admin Kurator Mitra BPMP Kalsel",
+            actorName: "Admin Kurator Guru Banua",
             action: "revision_requested",
             previousStatus: "pending_review",
             newStatus: "revision_requested",
@@ -280,7 +280,7 @@ export default function App() {
             id: "mod-log-2",
             workId: "work-101",
             workTitle: "Petualangan Matematika di Rawa Lebak Amuntai",
-            actorName: "Admin Kurator Mitra BPMP Kalsel",
+            actorName: "Admin Kurator Guru Banua",
             action: "published",
             previousStatus: "pending_review",
             newStatus: "published",
@@ -304,7 +304,7 @@ export default function App() {
           },
           {
             id: "aud-2",
-            actorName: "Admin Kurator Mitra BPMP Kalsel",
+            actorName: "Admin Kurator Guru Banua",
             action: "work_published",
             targetType: "works/work-101",
             summary: "Menerbitkan karya 'Petualangan Matematika di Rawa Lebak Amuntai'",
@@ -838,7 +838,7 @@ export default function App() {
       // Jika akun pengguna ditemukan (kontributor / admin yang sudah terdaftar)
       if (targetUser) {
         if (targetUser.accountStatus === "pending") {
-          const msg = `Halo ${targetUser.displayName}, akun Anda masih menunggu persetujuan Kurator Mitra BPMP Kalsel.`;
+          const msg = `Halo ${targetUser.displayName}, akun Anda masih menunggu persetujuan Kurator Guru Banua.`;
           triggerToast(msg, "info");
           return { success: false, message: msg };
         }
@@ -948,7 +948,7 @@ export default function App() {
 
     setIsAuthModalOpen(false);
     triggerToast(
-      "Pendaftaran berhasil! Akun Anda sedang diverifikasi oleh Tim Kurator Mitra BPMP Provinsi Kalimantan Selatan.",
+      "Pendaftaran berhasil! Akun Anda sedang diverifikasi oleh Tim Kurasi Guru Banua Kalimantan Selatan.",
       "success"
     );
     return { success: true };
@@ -1170,7 +1170,7 @@ export default function App() {
     if (!targetWork) return;
 
     const nowWITA = new Date().toLocaleString("id-ID", { timeZone: "Asia/Makassar" }) + " WITA";
-    const actor = role === "superAdmin" ? "Super Admin BAKARYA" : "Admin Kurator Mitra BPMP Kalsel";
+    const actor = role === "superAdmin" ? "Super Admin BAKARYA" : "Admin Kurator Guru Banua";
 
     const updatedWork: Work = {
       ...targetWork,
@@ -1529,7 +1529,7 @@ export default function App() {
                 const defaultContribName =
                   currentUserProfile?.displayName ||
                   (role === "admin"
-                    ? "Admin Kurator Mitra BPMP Kalsel"
+                    ? "Admin Kurator Guru Banua"
                     : role === "superAdmin"
                     ? usersList.find((u) => u.role === "superAdmin")?.displayName || "Super Admin BAKARYA"
                     : "Siti Rahmah, S.Pd.");

@@ -394,11 +394,17 @@ export default function App() {
               }
             } catch {}
           }
-        } else if (userEmail === "alfyarnaim@gmail.com") {
+        } else if (
+          (import.meta.env.VITE_SUPERADMIN_EMAIL &&
+            userEmail === import.meta.env.VITE_SUPERADMIN_EMAIL.toLowerCase()) ||
+          userEmail === "admin@bakarya.hsu.go.id"
+        ) {
+          const superAdminUid =
+            usersList.find((u) => u.role === "superAdmin")?.uid || "uid-super-admin";
           setRole("superAdmin");
-          setLoggedInUserUid("uid-super-alfyarnaim");
+          setLoggedInUserUid(superAdminUid);
           try {
-            localStorage.setItem("bakarya_user_uid", "uid-super-alfyarnaim");
+            localStorage.setItem("bakarya_user_uid", superAdminUid);
             localStorage.setItem("bakarya_user_role", "superAdmin");
             if (!lastActiveStr) {
               localStorage.setItem("bakarya_last_activity_time", Date.now().toString());
@@ -639,7 +645,7 @@ export default function App() {
       : role === "admin"
       ? "uid-admin-1"
       : role === "superAdmin"
-      ? "uid-super-alfyarnaim"
+      ? usersList.find((u) => u.role === "superAdmin")?.uid || "uid-super-admin"
       : null;
   }, [role, loggedInUserUid, usersList]);
 
@@ -853,7 +859,6 @@ export default function App() {
     const newGoogleContributor: UserAccount = {
       uid: newUid,
       username: usernameFromEmail || "guru.bakarya",
-      tempPassword: payload.password || "", // KATA SANDI TERSIMPAN SECARA NYATA
       displayName: payload.displayName,
       email: normalizedEmail,
       institution: payload.institution,
@@ -876,7 +881,7 @@ export default function App() {
 
     setIsAuthModalOpen(false);
     triggerToast(
-      "Pendaftaran berhasil! Kata sandi telah disimpan. Akun Anda sedang menunggu persetujuan Admin.",
+      "Pendaftaran berhasil! Akun Anda sedang menunggu persetujuan Admin.",
       "success"
     );
   };
@@ -1454,14 +1459,14 @@ export default function App() {
                   (role === "admin"
                     ? "uid-admin-1"
                     : role === "superAdmin"
-                    ? "uid-super-alfyarnaim"
+                    ? usersList.find((u) => u.role === "superAdmin")?.uid || "uid-super-admin"
                     : "uid-contrib-1");
                 const defaultContribName =
                   currentUserProfile?.displayName ||
                   (role === "admin"
                     ? "Admin Kurator Disdik HSU"
                     : role === "superAdmin"
-                    ? "Alfyar Naim"
+                    ? usersList.find((u) => u.role === "superAdmin")?.displayName || "Super Admin BAKARYA"
                     : "Siti Rahmah, S.Pd.");
                 const defaultInstitution =
                   currentUserProfile?.institution || "Kabupaten Hulu Sungai Utara";

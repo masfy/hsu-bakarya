@@ -33,7 +33,7 @@ export function ArchitectureView({ onRefreshData }: ArchitectureViewProps) {
     if (
       !window.confirm(
         mode === "clean"
-          ? "Inisialisasi Bersih (Clean Slate):\nIni akan menulis data Super Admin (alfyarnaim@gmail.com) dan struktur taksonomi ke Cloud Firestore tanpa karya mock data.\n\nLanjutkan?"
+          ? "Inisialisasi Bersih (Clean Slate):\nIni akan menulis data akun Super Admin dan struktur taksonomi ke Cloud Firestore tanpa karya mock data.\n\nLanjutkan?"
           : "Inisialisasi Penuh:\nIni akan menulis Super Admin, struktur taksonomi, dan data awal karya Gugus 2 HSU ke Cloud Firestore.\n\nLanjutkan?"
       )
     ) {
@@ -111,14 +111,15 @@ service cloud.firestore {
   ]
 }`;
 
-  const envConfigSample = `# Variabel Lingkungan Firebase Resmi BAKARYA (bakarya-8152e)
-VITE_FIREBASE_API_KEY="AIzaSyCnpCeMkPku8rejjbG2yczqvhMXRptLukU"
-VITE_FIREBASE_AUTH_DOMAIN="bakarya-8152e.firebaseapp.com"
-VITE_FIREBASE_PROJECT_ID="bakarya-8152e"
-VITE_FIREBASE_STORAGE_BUCKET="bakarya-8152e.firebasestorage.app"
-VITE_FIREBASE_MESSAGING_SENDER_ID="203212618767"
-VITE_FIREBASE_APP_ID="1:203212618767:web:875d77b46653b35a30377a"
-VITE_FIREBASE_MEASUREMENT_ID="G-BFMPP06K77"`;
+  const envConfigSample = `# Variabel Lingkungan Firebase untuk BAKARYA Portal
+VITE_FIREBASE_API_KEY="AIzaSyYOUR_FIREBASE_API_KEY_HERE"
+VITE_FIREBASE_AUTH_DOMAIN="your-project-id.firebaseapp.com"
+VITE_FIREBASE_PROJECT_ID="your-project-id"
+VITE_FIREBASE_STORAGE_BUCKET="your-project-id.firebasestorage.app"
+VITE_FIREBASE_MESSAGING_SENDER_ID="123456789012"
+VITE_FIREBASE_APP_ID="1:123456789012:web:abcdef1234567890"
+VITE_FIREBASE_MEASUREMENT_ID="G-XXXXXXXXXX"
+VITE_SUPERADMIN_EMAIL="admin@bakarya.hsu.go.id"`;
 
   const deployGuideCode = `# 1. Install Firebase CLI secara global
 npm install -g firebase-tools
@@ -172,14 +173,14 @@ firebase deploy --only firestore:rules,firestore:indexes`;
           </p>
         </div>
 
-        {/* Kartu Profil Kredensial Super Admin */}
+        {/* Kartu Status Keamanan Akun Super Admin */}
         <div className="bg-white/10 rounded-2xl p-4 sm:p-5 border border-white/15 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
           <div>
             <span className="text-white/60 font-semibold uppercase tracking-wider text-[10px] block">
               Super Admin Email
             </span>
             <div className="font-mono font-bold text-white text-sm mt-0.5">
-              alfyarnaim@gmail.com
+              {import.meta.env.VITE_SUPERADMIN_EMAIL || "Dikelola via Firebase Auth"}
             </div>
           </div>
           <div>
@@ -192,10 +193,11 @@ firebase deploy --only firestore:rules,firestore:indexes`;
           </div>
           <div>
             <span className="text-white/60 font-semibold uppercase tracking-wider text-[10px] block">
-              Kata Sandi Default
+              Status Kredensial
             </span>
-            <div className="font-mono font-bold text-emerald-300 text-sm mt-0.5">
-              kadabakarya
+            <div className="font-mono font-bold text-emerald-300 text-sm mt-0.5 flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5 text-emerald-300" />
+              <span>Terkunci & Terenkripsi</span>
             </div>
           </div>
         </div>
@@ -275,7 +277,7 @@ firebase deploy --only firestore:rules,firestore:indexes`;
                 Inisialisasi Bersih (Clean Slate - Tanpa Mock Data)
               </h3>
               <p className="text-xs text-[#727782] mt-1 leading-relaxed">
-                Hanya membuat akun Super Admin (<strong>alfyarnaim@gmail.com</strong>) dan struktur taksonomi (kategori, mapel, format media). Koleksi karya dibiarkan <strong>kosong (0 karya)</strong> sehingga siap diisi karya nyata guru.
+                Hanya membuat akun Super Admin dan struktur taksonomi (kategori, mapel, format media). Koleksi karya dibiarkan <strong>kosong (0 karya)</strong> sehingga siap diisi karya nyata guru.
               </p>
             </div>
             <button

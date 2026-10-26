@@ -5,9 +5,8 @@ service cloud.firestore {
       return request.auth != null; 
     }
     
-    // Akun Super Admin Utama berbasis email
-    function isSuperAdminEmail() {
-      return isSignedIn() && request.auth.token.email == 'alfyarnaim@gmail.com';
+    function isSuperAdmin() {
+      return isSignedIn() && getUserData().get('accountStatus', '') == 'active' && getUserData().get('role', '') == 'superAdmin';
     }
     
     function getUserData() { 
@@ -17,12 +16,13 @@ service cloud.firestore {
     }
     
     function hasRole(roles) { 
-      return isSuperAdminEmail() || (isSignedIn() && getUserData().get('accountStatus', '') == 'active' && getUserData().get('role', '') in roles); 
+      return isSignedIn() && getUserData().get('accountStatus', '') == 'active' && (getUserData().get('role', '') in roles); 
     }
     
     function isAdmin() { 
-      return isSuperAdminEmail() || hasRole(['admin', 'superAdmin']); 
+      return hasRole(['admin', 'superAdmin']); 
     }
+
 
     // Koleksi Karya Digital (Works)
     match /works/{workId} {

@@ -5,10 +5,6 @@ import {
   getDocs,
   writeBatch,
 } from "firebase/firestore";
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-} from "firebase/auth";
 import { auth, db, isFirebaseConfigured } from "./firebase";
 import {
   CONTRIBUTORS,
@@ -35,7 +31,7 @@ export interface SeedResult {
 /**
  * Inisialisasi & Seeding Database Cloud Firestore
  * @param mode 'full' untuk inisialisasi lengkap (karya + kategori + superadmin),
- *             'clean' untuk inisialisasi murni (hanya Super Admin alfyarnaim & taksonomi, 0 karya)
+ *             'clean' untuk inisialisasi murni (hanya Super Admin & taksonomi, 0 karya)
  */
 export async function seedFirestoreDatabase(mode: "full" | "clean" = "full"): Promise<SeedResult> {
   if (!isFirebaseConfigured || !db) {
@@ -46,26 +42,11 @@ export async function seedFirestoreDatabase(mode: "full" | "clean" = "full"): Pr
     };
   }
 
-  // Jika Firebase Auth tersedia dan user belum login di SDK, otomatis login/buat akun Super Admin
-  if (auth && !auth.currentUser) {
-    try {
-      await signInWithEmailAndPassword(auth, "alfyarnaim@gmail.com", "kadabakarya");
-      console.log("🔥 Seed service: Berhasil login ke Firebase Auth sebagai Super Admin.");
-    } catch (authErr: any) {
-      if (
-        authErr.code === "auth/user-not-found" ||
-        authErr.code === "auth/invalid-credential" ||
-        authErr.code === "auth/wrong-password"
-      ) {
-        try {
-          await createUserWithEmailAndPassword(auth, "alfyarnaim@gmail.com", "kadabakarya");
-          console.log("🔥 Seed service: Berhasil mendaftarkan akun Super Admin di Firebase Auth.");
-        } catch (createErr) {
-          console.warn("Seed service tidak dapat membuat user Auth:", createErr);
-        }
-      }
-    }
-  }
+  const adminEmail =
+    import.meta.env.VITE_SUPERADMIN_EMAIL ||
+    auth?.currentUser?.email ||
+    "admin@bakarya.hsu.go.id";
+  const adminUid = auth?.currentUser?.uid || "uid-super-admin";
 
   try {
     const batch = writeBatch(db);
@@ -97,18 +78,16 @@ export async function seedFirestoreDatabase(mode: "full" | "clean" = "full"): Pr
       );
     }
 
-    // 4. Seed Pengguna (Super Admin alfyarnaim@gmail.com dijamin ada)
+    // 4. Seed Pengguna (Super Admin aktif dijamin ada)
     let usersToSeed: UserAccount[] = [];
     if (mode === "clean") {
-      // Hanya Super Admin Alfyar Naim
-      const superAdminUser = CONTRIBUTORS.find((u) => u.role === "superAdmin") || {
-        uid: "uid-super-alfyarnaim",
-        username: "alfyarnaim",
-        tempPassword: "kadabakarya",
-        displayName: "Alfyar Naim",
-        email: "alfyarnaim@gmail.com",
-        institution: "Fasilitator Digitalisasi",
-        district: "Gugus 2 HSU",
+      const superAdminUser: UserAccount = {
+        uid: adminUid,
+        username: "superadmin.bakarya",
+        displayName: auth?.currentUser?.displayName || "Super Administrator BAKARYA",
+        email: adminEmail,
+        institution: "Disdikbud Kab. HSU",
+        district: "Amuntai Tengah",
         bio: "Fasilitator Digitalisasi & Super Admin Pengelola Utama Portal Pembelajaran Digital BAKARYA Gugus 2 HSU.",
         role: "superAdmin",
         accountStatus: "active",
@@ -126,7 +105,9 @@ export async function seedFirestoreDatabase(mode: "full" | "clean" = "full"): Pr
 
     for (const user of usersToSeed) {
       const userRef = doc(db, "users", user.uid);
-      batch.set(userRef, user, { merge: true });
+      // Prinsip Keamanan: Jangan pernah menulis password atau tempPassword ke Firestore!
+      const { tempPassword, ...safeUserData } = user;
+      batch.set(userRef, safeUserData, { merge: true });
     }
 
     // 5. Seed Karya
@@ -142,7 +123,7 @@ export async function seedFirestoreDatabase(mode: "full" | "clean" = "full"): Pr
       const existingUsersSnapshot = await getDocs(collection(db, "users"));
       for (const docSnap of existingUsersSnapshot.docs) {
         const udata = docSnap.data();
-        if (udata.email !== "alfyarnaim@gmail.com") {
+        if (udata.email !== adminEmail) {
           batch.delete(docSnap.ref);
         }
       }
@@ -161,8 +142,8 @@ export async function seedFirestoreDatabase(mode: "full" | "clean" = "full"): Pr
       success: true,
       message:
         mode === "clean"
-          ? "Database berhasil diinisialisasi bersih (Clean Slate)! Akun Super Admin alfyarnaim@gmail.com dan taksonomi telah aktif di Cloud Firestore. Koleksi karya 100% kosong (tanpa data mock)."
-          : "Database berhasil diinisialisasi penuh dengan data kurasi Gugus 2 HSU dan Super Admin alfyarnaim@gmail.com.",
+          ? `Database berhasil diinisialisasi bersih (Clean Slate)! Akun Super Admin (${adminEmail}) dan taksonomi telah aktif di Cloud Firestore. Koleksi karya 100% kosong (tanpa data mock).`
+          : "Database berhasil diinisialisasi penuh dengan data kurasi Gugus 2 HSU dan struktur taksonomi.",
       counts: {
         users: usersToSeed.length,
         works: worksToSeed.length,
@@ -172,6 +153,7 @@ export async function seedFirestoreDatabase(mode: "full" | "clean" = "full"): Pr
       },
     };
   } catch (error: any) {
+
     console.error("Gagal melakukan seeding Firestore:", error);
     const isPermission =
       error?.code === "permission-denied" ||

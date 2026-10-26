@@ -5,11 +5,10 @@ import {
   UserPlus,
   Search,
   Trash2,
-  Eye,
-  EyeOff,
   CheckCircle2,
   Edit3,
   RotateCcw,
+  ShieldCheck,
 } from "lucide-react";
 import { UserAccount, UserRole, AccountStatus, Work } from "../types";
 import { getDriveDirectImageUrl } from "../utils/drive";
@@ -87,7 +86,7 @@ export function UsersView({
             Daftar Kontributor, Pengelola & Kontrol Akses
           </h1>
           <p className="text-xs sm:text-sm text-white/80 leading-relaxed">
-            Kelola pendaftaran peserta/kontributor baru, lihat kredensial login (Email, Username & Password),
+            Kelola pendaftaran peserta/kontributor baru, status autentikasi Google/Email terenkripsi,
             ubah peran, setujui akun tertunda, bekukan akses, atau hapus/pulihkan akun.
           </p>
         </div>
@@ -239,29 +238,11 @@ export function UsersView({
                         </div>
                         <div>
                           <span className="text-[10px] font-extrabold uppercase text-[#727782] block">
-                            Password:
+                            Autentikasi:
                           </span>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="font-mono font-bold text-[#14213D] bg-white px-2 py-0.5 rounded border">
-                              {isPassVisible ? userItem.tempPassword || "—" : "••••••••"}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setVisiblePasswords((prev) => ({
-                                  ...prev,
-                                  [userItem.uid]: !prev[userItem.uid],
-                                }))
-                              }
-                              className="p-1 rounded-lg hover:bg-white text-[#727782]"
-                              title="Tampilkan / Sembunyikan Password"
-                            >
-                              {isPassVisible ? (
-                                <EyeOff className="w-3.5 h-3.5" />
-                              ) : (
-                                <Eye className="w-3.5 h-3.5" />
-                              )}
-                            </button>
+                          <div className="flex items-center gap-1 mt-0.5 text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded text-[11px] font-bold">
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <span>Terkunci & Aman</span>
                           </div>
                         </div>
                       </div>

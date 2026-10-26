@@ -142,11 +142,9 @@ Jika Anda ingin menghubungkan data ke Firebase Firestore asli:
 5. Untuk panduan lengkap langkah-demi-langkah setup Firebase di Firebase Console hingga seeding database tanpa mock data, baca:
    👉 **[PANDUAN_SETUP_FIREBASE.md](file:///d:/AntiGravity/BAKARYA/PANDUAN_SETUP_FIREBASE.md)**
 
-6. **Kredensial Super Admin Utama**:
-   - **Email**: `alfyarnaim@gmail.com`
-   - **Jabatan**: `Fasilitator Digitalisasi` (Gugus 2 HSU)
-   - **Kata Sandi**: `kadabakarya`
-   - **Role**: `superAdmin`
+6. **Akun Akses Administrator**:
+   - Untuk mode demo lokal: Anda dapat mencoba masuk menggunakan akun kontributor contoh yang ada di sistem, atau mendaftar akun baru lewat modal masuk.
+   - Untuk mode produksi Firebase: Daftarkan akun Administrator utama di Firebase Console Authentication sesuai petunjuk di [PANDUAN_SETUP_FIREBASE.md](file:///d:/AntiGravity/BAKARYA/PANDUAN_SETUP_FIREBASE.md).
 
 7. Deploy aturan keamanan dan indeks ke Firestore menggunakan Firebase CLI:
    ```bash

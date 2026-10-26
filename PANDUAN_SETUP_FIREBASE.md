@@ -4,18 +4,19 @@ Panduan ini disusun khusus untuk **Super Admin Portal BAKARYA** agar dapat mengh
 
 ---
 
-## 🔑 1. Kredensial Akun Super Admin Utama
+## 🔑 1. Pengaturan Akun Super Admin Utama
 
-Portal BAKARYA telah dikonfigurasi dengan akun Super Admin default berikut:
+Untuk menjalankan Portal BAKARYA dengan hak akses penuh, daftarkan akun Administrator utama di Firebase Console.
 
-| Parameter | Nilai Konfigurasi |
+| Parameter | Rekomendasi Pengaturan |
 | :--- | :--- |
-| **Email** | `alfyarnaim@gmail.com` |
-| **Nama Lengkap** | `Alfyar Naim` |
-| **Jabatan / Instansi** | `Fasilitator Digitalisasi` |
-| **Wilayah Gugus** | `Gugus 2 HSU` |
-| **Kata Sandi (Password)** | `kadabakarya` |
+| **Email** | Gunakan email resmi admin / instansi (misal: `admin@bakarya.hsu.go.id` atau akun Google Anda) |
+| **Nama Lengkap** | Nama lengkap Administrator Portal |
+| **Jabatan / Instansi** | Jabatan resmi (misal: *Fasilitator Digitalisasi Gugus 2 HSU*) |
+| **Kata Sandi (Password)** | Buat kata sandi yang kuat dan aman (*jangan pernah tuliskan di repositori!*) |
 | **Peran Sistem (Role)** | `superAdmin` *(Akses Penuh: Kelola User, Moderasi, Analitik, Konfigurasi Firestore)* |
+
+> 🔒 **Prinsip Keamanan**: Kredensial akun nyata dan kata sandi **TIDAK BOLEH** disimpan di dalam kode sumber repositori publik.
 
 ---
 
@@ -23,7 +24,7 @@ Portal BAKARYA telah dikonfigurasi dengan akun Super Admin default berikut:
 
 ### Langkah 2.1: Buat Proyek Firebase Baru
 1. Buka browser dan kunjungi [Firebase Console](https://console.firebase.google.com/).
-2. Login menggunakan akun Google Anda (`alfyarnaim@gmail.com`).
+2. Login menggunakan akun Google Anda.
 3. Klik tombol **"Add project"** (Tambah Proyek).
 4. Masukkan nama project, contoh: `bakarya-gugus2-hsu`.
 5. Pada pilihan *Google Analytics*, Anda dapat mengaktifkannya (disarankan) lalu klik **Create project**.
@@ -43,12 +44,12 @@ Portal BAKARYA telah dikonfigurasi dengan akun Super Admin default berikut:
      - Klik pada baris *Google*.
      - Geser toggle *Enable* menjadi aktif.
      - Pilih *Project public-facing name* (misal: `BAKARYA Gugus 2 HSU`).
-     - Pilih *Project support email*: `alfyarnaim@gmail.com`.
+     - Pilih *Project support email*: Pilih email Google Anda.
      - Klik **Save**.
 4. Pindah ke tab **Users** di halaman Authentication:
    - Klik tombol **Add user**.
-   - Masukkan Email: `alfyarnaim@gmail.com`.
-   - Masukkan Password: `kadabakarya`.
+   - Masukkan Email: Email Super Admin yang ingin Anda gunakan.
+   - Masukkan Password: Buat kata sandi yang kuat dan aman.
    - Klik **Add user**.
    *(Langkah ini mendaftarkan akun Super Admin langsung di Firebase Authentication)*.
 
@@ -146,36 +147,40 @@ service firebase.storage {
 3. Klik ikon Web (`</>`).
 4. Masukkan nama aplikasi: `BAKARYA Web`.
 5. Klik **Register app**.
-6. Konfigurasi proyek Anda (`bakarya-8152e`):
+6. Firebase akan menampilkan objek konfigurasi seperti berikut:
 ```javascript
 const firebaseConfig = {
-  apiKey: "AIzaSyCnpCeMkPku8rejjbG2yczqvhMXRptLukU",
-  authDomain: "bakarya-8152e.firebaseapp.com",
-  projectId: "bakarya-8152e",
-  storageBucket: "bakarya-8152e.firebasestorage.app",
-  messagingSenderId: "203212618767",
-  appId: "1:203212618767:web:875d77b46653b35a30377a",
-  measurementId: "G-BFMPP06K77"
+  apiKey: "AIzaSyYOUR_FIREBASE_API_KEY_HERE",
+  authDomain: "your-project-id.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project-id.firebasestorage.app",
+  messagingSenderId: "123456789012",
+  appId: "1:123456789012:web:abcdef1234567890",
+  measurementId: "G-XXXXXXXXXX"
 };
 ```
+> ⚠️ Salin nilai-nilai tersebut ke file `.env.local` di komputer lokal Anda (lihat Bagian 3). Jangan pernah commit kunci asli ke repositori!
 
 ---
 
 ## 💻 3. Konfigurasi File Lingkungan `.env.local`
 
-File `.env.local` di folder root proyek `BAKARYA` telah diisi dengan konfigurasi Firebase resmi proyek Anda:
+Buat file baru bernama `.env.local` di folder root proyek `BAKARYA` (sejajar dengan `package.json`). Isi dengan nilai konfigurasi dari Firebase Console:
 
 ```env
-VITE_FIREBASE_API_KEY="AIzaSyCnpCeMkPku8rejjbG2yczqvhMXRptLukU"
-VITE_FIREBASE_AUTH_DOMAIN="bakarya-8152e.firebaseapp.com"
-VITE_FIREBASE_PROJECT_ID="bakarya-8152e"
-VITE_FIREBASE_STORAGE_BUCKET="bakarya-8152e.firebasestorage.app"
-VITE_FIREBASE_MESSAGING_SENDER_ID="203212618767"
-VITE_FIREBASE_APP_ID="1:203212618767:web:875d77b46653b35a30377a"
-VITE_FIREBASE_MEASUREMENT_ID="G-BFMPP06K77"
+VITE_FIREBASE_API_KEY="AIzaSyYOUR_FIREBASE_API_KEY_HERE"
+VITE_FIREBASE_AUTH_DOMAIN="your-project-id.firebaseapp.com"
+VITE_FIREBASE_PROJECT_ID="your-project-id"
+VITE_FIREBASE_STORAGE_BUCKET="your-project-id.firebasestorage.app"
+VITE_FIREBASE_MESSAGING_SENDER_ID="123456789012"
+VITE_FIREBASE_APP_ID="1:123456789012:web:abcdef1234567890"
+VITE_FIREBASE_MEASUREMENT_ID="G-XXXXXXXXXX"
+
+# Email Super Admin (Opsional - agar akun Anda langsung dikenali sebagai Super Admin)
+VITE_SUPERADMIN_EMAIL="admin@bakarya.hsu.go.id"
 ```
 
-> **Catatan Keamanan**: File `.env.local` sudah masuk ke dalam `.gitignore` sehingga tidak akan bocor ke publik saat di-push ke GitHub. Variabel ini juga yang akan Anda masukkan saat deploy di Vercel nanti.
+> 🛡️ **Penting**: File `.env.local` sudah tercantum di `.gitignore` sehingga aman dan tidak akan terunggah ke GitHub. Nilai variabel ini pula yang akan dimasukkan ke Environment Variables dashboard hosting (seperti Vercel).
 
 ---
 
@@ -185,13 +190,11 @@ Setelah file `.env.local` dibuat dan server dijalankan (`npm run dev`):
 
 1. Buka browser di `http://localhost:3000/`.
 2. Klik tombol **"Masuk"** di navigasi kanan atas.
-3. Masuk dengan:
-   - Email: `alfyarnaim@gmail.com`
-   - Password: `kadabakarya`
+3. Masuk dengan Email & Password Super Admin yang telah Anda daftarkan di Firebase Authentication (Langkah 2.2).
 4. Di navigasi atas, klik tab **"🔒 Firebase"** (hanya muncul untuk Super Admin).
 5. Pada panel **Inisialisasi Koleksi Firestore (Database Seeder)**, Anda memiliki dua pilihan:
    - **Tombol "Inisialisasi Bersih (Clean Slate)"**:
-     - Menulis dokumen Super Admin `alfyarnaim@gmail.com` (Jabatan: Fasilitator Digitalisasi) ke koleksi `users`.
+     - Menulis dokumen Super Admin aktif ke koleksi `users`.
      - Menulis seluruh struktur taksonomi (`categories`, `subjects`, `mediaTypes`).
      - Membiarkan koleksi karya **kosong (0 karya)** sehingga siap menerima karya nyata asli dari guru tanpa ada mock data.
    - **Tombol "Inisialisasi Penuh (+ Karya Awal)"**:
@@ -206,7 +209,7 @@ Setelah file `.env.local` dibuat dan server dijalankan (`npm run dev`):
 Buka terminal dan jalankan:
 ```bash
 git add .
-git commit -m "feat: setup firebase dan konfigurasi superadmin alfyarnaim"
+git commit -m "feat: setup firebase dan konfigurasi superadmin"
 git push origin main
 ```
 
@@ -222,5 +225,6 @@ git push origin main
    - `VITE_FIREBASE_MESSAGING_SENDER_ID`
    - `VITE_FIREBASE_APP_ID`
    - `VITE_FIREBASE_MEASUREMENT_ID`
+   - `VITE_SUPERADMIN_EMAIL`
 5. Klik **Deploy**.
 6. Portal BAKARYA siap diakses di seluruh dunia dengan domain Vercel gratis (atau custom domain dinas pendidikan)!

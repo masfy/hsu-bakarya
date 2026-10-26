@@ -40,10 +40,13 @@ export async function saveUserToFirestore(user: UserAccount): Promise<boolean> {
   if (!isFirebaseConfigured || !db) return false;
   try {
     const userRef = doc(db, USERS_COLLECTION, user.uid);
-    // Sanitize to remove any undefined fields before sending to Firestore
+    // Sanitize to remove any undefined fields and NEVER store plain passwords in Firestore database!
     const cleanUser = JSON.parse(JSON.stringify(user));
+    delete cleanUser.tempPassword;
+    delete cleanUser.password;
     await setDoc(userRef, cleanUser, { merge: true });
     return true;
+
   } catch (error) {
     console.error("Gagal menyimpan pengguna ke Firestore:", error);
     return false;

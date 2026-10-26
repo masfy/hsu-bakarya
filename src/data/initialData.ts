@@ -134,7 +134,6 @@ export const CONTRIBUTORS: UserAccount[] = [
   {
     uid: "uid-contrib-1",
     username: "siti.rahmah.hsu",
-    tempPassword: "Bakarya#HSU2026!",
     displayName: "Siti Rahmah, S.Pd.",
     email: "siti.rahmah@guru.sd.belajar.id",
     institution: "SDN Paliwara 1 Amuntai",
@@ -152,7 +151,6 @@ export const CONTRIBUTORS: UserAccount[] = [
   {
     uid: "uid-contrib-2",
     username: "ahmad.fauzan.hsu",
-    tempPassword: "Bakarya#Fauzan26",
     displayName: "Ahmad Fauzan, M.Pd.",
     email: "ahmad.fauzan@guru.smp.belajar.id",
     institution: "SMPN 1 Amuntai",
@@ -170,7 +168,6 @@ export const CONTRIBUTORS: UserAccount[] = [
   {
     uid: "uid-contrib-3",
     username: "norhalimah.hsu",
-    tempPassword: "Bakarya#Halimah26",
     displayName: "Norhalimah, S.Pd., Gr.",
     email: "norhalimah@guru.sma.belajar.id",
     institution: "SMAN 1 Amuntai",
@@ -188,7 +185,6 @@ export const CONTRIBUTORS: UserAccount[] = [
   {
     uid: "uid-contrib-pending-1",
     username: "muhammad.rizki.hsu",
-    tempPassword: "GoogleAuth#OAuth2",
     displayName: "Muhammad Rizki, S.Pd.",
     email: "m.rizki.gugus2@guru.sd.belajar.id",
     institution: "SDN Murung Sari 2 Amuntai",
@@ -206,7 +202,6 @@ export const CONTRIBUTORS: UserAccount[] = [
   {
     uid: "uid-admin-1",
     username: "kurator.disdik.hsu",
-    tempPassword: "AdminKurator!2026",
     displayName: "H. Hendra Wijaya, M.Pd.",
     email: "kurator.bakarya@disdik.hsu.go.id",
     institution: "Dinas Pendidikan Kab. HSU",
@@ -222,12 +217,11 @@ export const CONTRIBUTORS: UserAccount[] = [
     avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80",
   },
   {
-    uid: "uid-super-alfyarnaim",
-    username: "alfyarnaim",
-    tempPassword: "kadabakarya",
-    displayName: "Alfyar Naim",
-    email: "alfyarnaim@gmail.com",
-    institution: "Fasilitator Digitalisasi",
+    uid: "uid-super-admin",
+    username: "superadmin.bakarya",
+    displayName: "Super Administrator BAKARYA",
+    email: "admin@bakarya.hsu.go.id",
+    institution: "Disdikbud Kab. HSU",
     district: "Amuntai Tengah",
     bio: "Fasilitator Digitalisasi & Super Admin Pengelola Utama Portal Pembelajaran Digital BAKARYA Gugus 2 HSU.",
     role: "superAdmin",
@@ -240,6 +234,7 @@ export const CONTRIBUTORS: UserAccount[] = [
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
   },
 ];
+
 
 export const INITIAL_WORKS: Work[] = [
   {

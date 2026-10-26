@@ -27,7 +27,7 @@ export function UserAccountModal({
   const [displayName, setDisplayName] = useState(initialData?.displayName || "");
   const [email, setEmail] = useState(initialData?.email || "");
   const [username, setUsername] = useState(initialData?.username || "");
-  const [tempPassword, setTempPassword] = useState(initialData?.tempPassword || "Bakarya#2026");
+  const [tempPassword, setTempPassword] = useState("");
   const [institution, setInstitution] = useState(initialData?.institution || "");
   const [district, setDistrict] = useState<string>(normalizeDistrict(initialData?.district));
   const [avatar, setAvatar] = useState(initialData?.avatar || PRESET_AVATARS[0]);
@@ -42,7 +42,7 @@ export function UserAccountModal({
       setDisplayName(initialData.displayName || "");
       setEmail(initialData.email || "");
       setUsername(initialData.username || "");
-      setTempPassword(initialData.tempPassword || "Bakarya#2026");
+      setTempPassword("");
       setInstitution(initialData.institution || "");
       setDistrict(normalizeDistrict(initialData.district));
       setAvatar(initialData.avatar || PRESET_AVATARS[0]);
@@ -233,13 +233,14 @@ export function UserAccountModal({
 
           <div>
             <label className="block text-xs font-bold uppercase mb-1 text-[#14213D]">
-              Password Sementara / Kunci Akses *
+              Kata Sandi / Reset Password
             </label>
             <input
-              type="text"
+              type="password"
               value={tempPassword}
               onChange={(e) => setTempPassword(e.target.value)}
-              className="w-full px-3.5 py-2 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs font-mono font-bold outline-none focus:border-[#167D78]"
+              placeholder="Kosongkan jika menggunakan Google Login / tidak diubah"
+              className="w-full px-3.5 py-2 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs font-mono outline-none focus:border-[#167D78]"
             />
           </div>
 

@@ -22,6 +22,7 @@ import {
 import { Work, UserAccount, UserRole } from "../types";
 import { StatusBadge } from "../components/common/StatusBadge";
 import { getDriveDirectImageUrl, BAKARYA_DEFAULT_THUMBNAIL_URL } from "../utils/drive";
+import { getWorkCreatedTime } from "../utils/date";
 
 interface DashboardViewProps {
   role: UserRole;
@@ -77,13 +78,13 @@ export function DashboardView({
           <div className="space-y-2 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[#F2B84B] text-xs font-bold uppercase tracking-wider">
               <Sparkles className="w-4 h-4" />
-              <span>Dashboard Publik Repositori Gugus 2 HSU</span>
+              <span>Dashboard Publik Repositori Guru Banua Kalsel</span>
             </div>
             <h1 className="font-display text-2xl sm:text-3xl font-extrabold leading-tight">
               Transparansi Capaian Digitalisasi Pembelajaran Banua
             </h1>
             <p className="text-xs sm:text-sm text-white/80 leading-relaxed">
-              Memantau pemanfaatan dan publikasi media pembelajaran interaktif karya pendidik di Kabupaten Hulu Sungai Utara (HSU) dalam program BOS Kinerja Sekolah Berprestasi 2026.
+              Memantau pemanfaatan dan publikasi media pembelajaran interaktif karya pendidik di Kalimantan Selatan bersama Mitra BPMP Provinsi Kalimantan Selatan.
             </p>
           </div>
 
@@ -158,7 +159,7 @@ export function DashboardView({
             <div className="font-display text-3xl font-extrabold text-indigo-900 mt-1">
               {activeContributors.length}
             </div>
-            <p className="text-[11px] text-[#727782] mt-1.5">Guru terdaftar Gugus 2 HSU</p>
+            <p className="text-[11px] text-[#727782] mt-1.5">Pendidik Terdaftar se-Kalsel</p>
           </div>
         </div>
 
@@ -248,7 +249,7 @@ export function DashboardView({
               Ingin Karya Pembelajaran Anda Dipublikasikan di BAKARYA?
             </h2>
             <p className="text-xs sm:text-sm text-white/80 leading-relaxed">
-              Seluruh pendidik di Gugus 2 Kabupaten Hulu Sungai Utara dapat mengunggah bahan ajar digital, game edukasi, e-LKPD, atau video interaktif secara gratis dan resmi.
+              Seluruh pendidik di Kalimantan Selatan dapat berbagi bahan ajar digital, game edukasi, e-LKPD, atau video interaktif secara terbuka dan terkurasi.
             </p>
           </div>
 
@@ -269,7 +270,7 @@ export function DashboardView({
               </div>
               <h3 className="font-display text-sm font-bold">Daftar Akun Pendidik</h3>
               <p className="text-xs text-white/75 leading-relaxed">
-                Pilih kecamatan di HSU, isi nama sekolah dan data profil untuk verifikasi akun pendidik.
+                Pilih wilayah tugas di Kalimantan Selatan, cantumkan asal sekolah untuk verifikasi akun pendidik.
               </p>
             </div>
 
@@ -279,7 +280,7 @@ export function DashboardView({
               </div>
               <h3 className="font-display text-sm font-bold">Kurasi & Terbit Resmi</h3>
               <p className="text-xs text-white/75 leading-relaxed">
-                Tim kurator Gugus 2 HSU meninjau keamanan tautan dan menerbitkan karya ke repositori publik.
+                Tim kurator bersama Mitra BPMP Provinsi Kalimantan Selatan meninjau kelayakan media serta keamanan tautan sebelum diterbitkan.
               </p>
             </div>
           </div>
@@ -301,9 +302,11 @@ export function DashboardView({
 
   // JIKA SUDAH LOGIN (CONTRIBUTOR / ADMIN / SUPER ADMIN)
   const currentUid = currentUserProfile?.uid || "uid-contrib-1";
-  const userWorks = works.filter(
-    (w) => !w.isDeleted && (role === "contributor" ? w.contributorId === currentUid : true)
-  );
+  const userWorks = [...works]
+    .filter(
+      (w) => !w.isDeleted && (role === "contributor" ? w.contributorId === currentUid : true)
+    )
+    .sort((a, b) => getWorkCreatedTime(b) - getWorkCreatedTime(a));
 
   const publishedCount = userWorks.filter((w) => w.status === "published").length;
   const pendingCount = userWorks.filter((w) => w.status === "pending_review").length;
@@ -346,9 +349,9 @@ export function DashboardView({
               <ShieldCheck className="w-4 h-4" />
               <span>
                 {role === "contributor"
-                  ? "Kontributor Pendidik"
+                  ? "Kontributor Guru Banua"
                   : role === "admin"
-                  ? "Admin Kurator Gugus"
+                  ? "Admin Kurator Mitra BPMP"
                   : "Super Admin Pengelola"}
               </span>
             </div>
@@ -440,7 +443,7 @@ export function DashboardView({
             <p className="text-xs text-[#727782]">
               {role === "contributor"
                 ? "Anda dapat memperbarui draf atau menanggapi revisi kurator."
-                : "Tim Kurator bertugas mereviu kesesuaian media dan keamanan link Drive."}
+                : "Tim Kurator bersama Mitra BPMP Kalsel meninjau kesesuaian media pembelajaran mulai dari yang paling baru diajukan."}
             </p>
           </div>
         </div>

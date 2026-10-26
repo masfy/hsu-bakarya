@@ -114,3 +114,21 @@ export function getWorkApprovalTime(work: Work): number {
 
   return getTimestampFromId(work.id);
 }
+
+/**
+ * Mendapatkan timestamp saat karya pertama kali diajukan/ditambahkan.
+ * Digunakan pada meja kurasi agar karya yang paling baru ditambahkan muncul paling atas.
+ */
+export function getWorkCreatedTime(work: Work): number {
+  const created = parseIndoDate(work.createdAt);
+  if (created > 0) return created;
+
+  const idTime = getTimestampFromId(work.id);
+  if (idTime > 0) return idTime;
+
+  const updated = parseIndoDate(work.updatedAt);
+  if (updated > 0) return updated;
+
+  return 0;
+}
+

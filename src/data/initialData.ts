@@ -20,11 +20,30 @@ import {
 import { BAKARYA_DEFAULT_THUMBNAIL_URL } from "../utils/drive";
 
 export const HERO_ANIMATED_PHRASES = [
-  "Bertumbuh Bersama",
-  "Berkarya Digital",
-  "Menginspirasi Kelas",
-  "Memajukan Banua",
+  "Mendidik Sepenuh Jiwa",
+  "Menyalakan Inovasi Kelas",
+  "Merawat Kearifan Banua",
+  "Menghubungkan Karya Guru",
 ];
+
+// 13 Kabupaten & Kota se-Provinsi Kalimantan Selatan
+export const KALSEL_REGIONS = [
+  "Kab. Hulu Sungai Utara (HSU)",
+  "Kota Banjarmasin",
+  "Kota Banjarbaru",
+  "Kab. Banjar",
+  "Kab. Hulu Sungai Tengah (HST)",
+  "Kab. Hulu Sungai Selatan (HSS)",
+  "Kab. Tabalong",
+  "Kab. Balangan",
+  "Kab. Tapin",
+  "Kab. Barito Kuala",
+  "Kab. Tanah Laut",
+  "Kab. Tanah Bumbu",
+  "Kab. Kotabaru",
+] as const;
+
+export type KalselRegion = (typeof KALSEL_REGIONS)[number];
 
 // Daftar 10 Kecamatan Resmi Kabupaten Hulu Sungai Utara (HSU)
 export const HSU_DISTRICTS = [
@@ -189,7 +208,7 @@ export const CONTRIBUTORS: UserAccount[] = [
     email: "m.rizki.gugus2@guru.sd.belajar.id",
     institution: "SDN Murung Sari 2 Amuntai",
     district: "Amuntai Tengah",
-    bio: "Peserta Kelas Digitalisasi Gugus 2 HSU yang mengembangkan media interaktif muatan lokal Kalimantan Selatan.",
+    bio: "Pendidik penggerak inovasi pembelajaran digital kontekstual muatan lokal Kalimantan Selatan.",
     role: "contributor",
     accountStatus: "pending",
     publicProfileEnabled: true,
@@ -201,12 +220,12 @@ export const CONTRIBUTORS: UserAccount[] = [
   },
   {
     uid: "uid-admin-1",
-    username: "kurator.disdik.hsu",
-    displayName: "H. Hendra Wijaya, M.Pd.",
-    email: "kurator.bakarya@disdik.hsu.go.id",
-    institution: "Dinas Pendidikan Kab. HSU",
-    district: "Amuntai Tengah",
-    bio: "Tim Kurator dan Moderator Media Pembelajaran Digital Kabupaten Hulu Sungai Utara.",
+    username: "kurator.bpmp.kalsel",
+    displayName: "Tim Kurasi BPMP Kalsel",
+    email: "kurator.bakarya@bpmp-kalsel.kemdikbud.go.id",
+    institution: "Mitra BPMP Provinsi Kalimantan Selatan",
+    district: "Provinsi Kalimantan Selatan",
+    bio: "Tim Kurator dan Penjaminan Mutu Media Pembelajaran Digital Mitra BPMP Provinsi Kalimantan Selatan.",
     role: "admin",
     accountStatus: "active",
     publicProfileEnabled: false,
@@ -221,9 +240,9 @@ export const CONTRIBUTORS: UserAccount[] = [
     username: "alfyarnaim",
     displayName: "Alfyar Naim",
     email: "alfyarnaim@gmail.com",
-    institution: "Fasilitator Digitalisasi Gugus 2 HSU",
-    district: "Amuntai Tengah",
-    bio: "Fasilitator Digitalisasi & Super Admin Pengelola Utama Portal Pembelajaran Digital BAKARYA Gugus 2 HSU.",
+    institution: "Inovator Komunitas Guru Banua",
+    district: "Amuntai Tengah, Kab. HSU",
+    bio: "Pengembang Komunitas Belajar & Super Admin Pengelola Utama Portal Pembelajaran Digital BAKARYA Kalimantan Selatan.",
     role: "superAdmin",
     accountStatus: "active",
     publicProfileEnabled: true,

@@ -563,7 +563,7 @@ export function WorkFormWizardModal({
                 className="w-full px-4 py-2.5 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-sm outline-none focus:border-[#167D78]"
               />
               <p className="text-[11px] text-[#727782] mt-1">
-                Mendukung tautan berbagi Google Drive (ID gambar akan diambil otomatis). Jika dikosongkan, sistem otomatis memakai gambar sampul resmi BAKARYA Gugus 2 HSU.
+                Mendukung tautan berbagi Google Drive (ID gambar akan diambil otomatis). Jika dikosongkan, sistem otomatis memakai gambar sampul resmi BAKARYA Guru Banua Kalsel.
               </p>
             </div>
 

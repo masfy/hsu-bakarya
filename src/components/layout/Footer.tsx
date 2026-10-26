@@ -31,11 +31,11 @@ export function Footer({ setActiveTab }: FooterProps) {
               </div>
             </div>
             <p className="text-xs text-[#727782] leading-relaxed max-w-md">
-              Portal repositori dan kurasi media pembelajaran digital interaktif pendidik Gugus 2 Kabupaten Hulu Sungai Utara (HSU), Kalimantan Selatan. Memajukan mutu pendidikan berbasis kearifan lokal lahan basah.
+              Portal repositori dan kurasi media pembelajaran digital interaktif persembahan Guru Banua di Kalimantan Selatan bersama Mitra BPMP Provinsi Kalimantan Selatan. Mendorong transformasi pembelajaran yang hidup, bermakna, dan berakar pada kearifan lokal.
             </p>
             <div className="flex items-center gap-2 text-[11px] font-bold text-[#167D78]">
               <Sparkles className="w-3.5 h-3.5 text-[#F2B84B]" />
-              <span>Program BOS Kinerja Sekolah Berprestasi 2026</span>
+              <span>Inisiatif Inovasi Pembelajaran Digital Guru Banua Kalsel</span>
             </div>
           </div>
 
@@ -85,10 +85,10 @@ export function Footer({ setActiveTab }: FooterProps) {
 
           <div>
             <h4 className="text-xs font-extrabold uppercase tracking-wider text-[#14213D] mb-3">
-              Mitra & Pembina
+              Mitra & Kolaborasi
             </h4>
             <p className="text-xs text-[#727782] leading-relaxed">
-              Dinas Pendidikan dan Kebudayaan Kab. Hulu Sungai Utara, Gugus 2 Kecamatan Amuntai Tengah.
+              Mitra BPMP Provinsi Kalimantan Selatan • Kolaborasi Inovasi & Penjaminan Mutu Pembelajaran Digital Banua.
             </p>
             <div className="mt-4 pt-3 border-t border-[#14213D]/10 text-[11px] text-[#727782]">
               Didukung oleh <strong>Cloud Firestore</strong> & <strong>Vercel Edge</strong>.
@@ -97,7 +97,7 @@ export function Footer({ setActiveTab }: FooterProps) {
         </div>
 
         <div className="mt-12 pt-6 border-t border-[#14213D]/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#727782]">
-          <p>© {new Date().getFullYear()} BAKARYA HSU. Hak Cipta Dilindungi Undang-Undang.</p>
+          <p>© {new Date().getFullYear()} BAKARYA — Banua Berkarya Digital Kalimantan Selatan. Hak Cipta Dilindungi Undang-Undang.</p>
           <div className="flex flex-wrap items-center gap-2">
             <span>Support by</span>
             <a

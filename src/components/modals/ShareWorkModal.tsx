@@ -27,7 +27,7 @@ export function ShareWorkModal({
   const shareUrl = `${window.location.origin}/#jelajah?karya=${work.slug}`;
 
   const handleCopyShareLink = () => {
-    const shareText = `${work.title} — Oleh ${work.contributorNameSnapshot} (${work.contributorInstitution})\nAkses di BAKARYA Gugus 2 HSU: ${shareUrl}`;
+    const shareText = `${work.title} — Oleh ${work.contributorNameSnapshot} (${work.contributorInstitution})\nAkses di Portal Inovasi Pembelajaran Guru Banua Kalsel (BAKARYA): ${shareUrl}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(shareText);
     } else {
@@ -108,7 +108,7 @@ export function ShareWorkModal({
           </div>
           <div className="p-4 space-y-1.5">
             <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#167D78]">
-              BAKARYA-HSU.ID • KELAS DIGITALISASI GUGUS 2 HSU
+              BAKARYA • INOVASI PEMBELAJARAN GURU BANUA KALSEL
             </div>
             <h4 className="font-display font-extrabold text-sm text-[#14213D] line-clamp-2">
               {work.title}

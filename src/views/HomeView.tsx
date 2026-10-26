@@ -249,11 +249,15 @@ export function HomeView({
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-white/85 text-sm sm:text-base lg:text-lg leading-relaxed max-w-2xl"
             >
-              Pusat kurasi media pembelajaran interaktif, game edukasi, dan alat bantu kelas hasil program{" "}
+              Ruang kurasi dan berbagi media pembelajaran interaktif persembahan{" "}
               <strong className="text-[#F2B84B]">
-                Kelas Digitalisasi Gugus 2 — Hulu Sungai Utara (Sekolah Penerima BOS Kinerja Terbaik 2026)
+                Guru Banua di Kalimantan Selatan
+              </strong>{" "}
+              bersama{" "}
+              <strong className="text-emerald-300">
+                Mitra BPMP Provinsi Kalimantan Selatan
               </strong>
-              , dikembangkan terbuka untuk seluruh guru Indonesia.
+              . Menyalakan suasana belajar kelas dengan karya kontekstual, kreatif, dan berdampak nyata.
             </motion.p>
 
             <motion.div
@@ -318,7 +322,7 @@ export function HomeView({
               <div className="relative w-full bg-gradient-to-b from-white via-[#FCFBF7] to-amber-50/20 p-5 sm:p-7 flex items-center justify-center border-b border-white/20">
                 <img
                   src={BAKARYA_DEFAULT_THUMBNAIL_URL}
-                  alt="Logo & Maskot BAKARYA Gugus 2 HSU"
+                  alt="Logo & Maskot BAKARYA Guru Banua Kalsel"
                   className="w-full h-auto max-h-64 object-contain rounded-2xl drop-shadow-sm transition-transform duration-500 hover:scale-105"
                   onError={(e) => {
                     e.currentTarget.onerror = null;
@@ -336,7 +340,7 @@ export function HomeView({
                     }}
                   />
                   <span className="text-[11px] font-extrabold text-[#F2B84B] tracking-wide">
-                    Gugus 2 HSU • Kalsel
+                    Guru Banua • Kalsel
                   </span>
                 </div>
               </div>
@@ -417,7 +421,7 @@ export function HomeView({
               Dampak & Kunjungan Portal Pembelajaran
             </h2>
             <p className="text-xs sm:text-sm text-[#727782] max-w-2xl mt-1 leading-relaxed">
-              Transparansi pantauan interaksi nyata para pendidik, peserta didik, dan pegiat literasi terhadap media pembelajaran digital kreasi guru Gugus 2 Kabupaten Hulu Sungai Utara.
+              Transparansi jejak interaksi dan pemanfaatan karya media digital kreasi Guru Banua se-Kalimantan Selatan bersama Mitra BPMP Provinsi Kalimantan Selatan.
             </p>
           </div>
 
@@ -517,7 +521,7 @@ export function HomeView({
                 <School className="w-5 h-5" />
               </div>
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-900 uppercase">
-                Gugus 2 HSU
+                Guru Banua Kalsel
               </span>
             </div>
             <div className="mt-4">
@@ -528,7 +532,7 @@ export function HomeView({
                 {activeContributors.length} Guru Kontributor
               </div>
               <div className="text-[11px] text-[#727782] mt-1">
-                {uniqueInstitutions} Sekolah terhubung di HSU
+                {uniqueInstitutions} Satuan Pendidikan se-Kalsel
               </div>
             </div>
           </motion.div>
@@ -882,8 +886,8 @@ export function HomeView({
                   </h3>
                   <p className="text-xs sm:text-sm text-[#727782] max-w-md mx-auto leading-relaxed">
                     {activeWorkFilter === "mine"
-                      ? "Mulai bagikan media pembelajaran digital inovatif Anda sekarang untuk menginspirasi rekan pendidik di Gugus 2 HSU!"
-                      : "Database Cloud Firestore dalam keadaan bersih. Guru dan Admin dapat masuk untuk mengunggah inovasi media pembelajaran interaktif!"}
+                      ? "Mulai bagikan media pembelajaran digital inovatif Anda sekarang untuk menginspirasi rekan pendidik di seluruh penjuru Banua Kalimantan Selatan!"
+                      : "Koleksi media pembelajaran siap menyambut karya terbaik Anda. Guru Banua dapat masuk untuk mengunggah inovasi media interaktif!"}
                   </p>
                 </div>
                 {role === "public" ? (

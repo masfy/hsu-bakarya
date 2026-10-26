@@ -20,14 +20,18 @@ export function GuideView() {
             <span>Tentang Program & Panduan Singkat</span>
           </div>
           <h1 className="font-display text-2xl sm:text-4xl font-extrabold leading-tight">
-            Hasil Karya Kelas Digitalisasi Gugus 2 — Hulu Sungai Utara
+            Karya Inovatif Guru Banua Kalimantan Selatan
           </h1>
           <p className="text-sm sm:text-base text-white/85 leading-relaxed">
-            <strong>BAKARYA (Banua Berkarya Digital)</strong> lahir dari inisiatif{" "}
+            <strong>BAKARYA (Banua Berkarya Digital)</strong> hadir sebagai wadah kolaborasi kreasi media pembelajaran digital persembahan{" "}
             <strong className="text-[#F2B84B]">
-              Kelas Digitalisasi Gugus 2 — Kabupaten Hulu Sungai Utara, Sekolah Penerima BOS Kinerja Terbaik Tahun 2026
+              Guru Banua di Kalimantan Selatan
+            </strong>{" "}
+            bersama{" "}
+            <strong className="text-emerald-300">
+              Mitra BPMP Provinsi Kalimantan Selatan
             </strong>
-            . Portal ini dikembangkan secara terbuka untuk seluruh guru dan pendidik agar dapat saling berbagi media pembelajaran yang berkualitas, aman, dan berdampak.
+            . Portal ini dikembangkan secara terbuka agar seluruh pendidik dapat saling berbagi media pembelajaran yang berkualitas, kontekstual, dan menginspirasi kelas.
           </p>
         </div>
       </div>
@@ -76,7 +80,7 @@ export function GuideView() {
               Kirim & Terbit ke Publik
             </h3>
             <p className="text-xs text-[#727782] leading-relaxed">
-              Isi judul, jenjang, mapel, dan tempel tautan karya. Tim Kurator Dinas Pendidikan & Gugus 2 HSU akan memoderasi sebelum karya resmi diterbitkan.
+              Isi judul, jenjang, mapel, dan tempel tautan karya. Tim Kurator Mitra BPMP Provinsi Kalimantan Selatan akan memoderasi sebelum karya resmi diterbitkan.
             </p>
           </div>
         </div>

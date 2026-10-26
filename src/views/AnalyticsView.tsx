@@ -161,7 +161,7 @@ export function AnalyticsView({
             Statistik & Analitik Pembelajaran Digital
           </h1>
           <p className="text-xs sm:text-sm text-white/75 mt-1 max-w-2xl">
-            Capaian transparansi pemanfaatan repositori digital karya pendidik Gugus 2 Kabupaten Hulu Sungai Utara (HSU).
+            Capaian transparansi pemanfaatan repositori digital karya Guru Banua Kalimantan Selatan bersama Mitra BPMP Provinsi Kalimantan Selatan.
           </p>
         </div>
 
@@ -254,7 +254,7 @@ export function AnalyticsView({
             {activeContributors.length}
           </div>
           <div className="mt-2 text-xs text-[#727782]">
-            Guru dan kurator aktif Gugus 2 HSU
+            Guru dan kurator aktif se-Kalimantan Selatan
           </div>
         </div>
       </div>

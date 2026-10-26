@@ -42,7 +42,7 @@ export function Navbar({
 }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navItems = [
+  const navItems: { id: string; label: string; highlight?: boolean; superOnly?: boolean }[] = [
     { id: "beranda", label: "Beranda" },
     { id: "jelajah", label: "Katalog Karya" },
     ...(role !== "public"
@@ -66,10 +66,8 @@ export function Navbar({
         ]
       : []),
     { id: "panduan", label: "Panduan" },
-    ...(role === "superAdmin"
-      ? [{ id: "arsitektur", label: "🔒 Firebase", superOnly: true }]
-      : []),
   ];
+
 
   const handleTabClick = (tabId: string) => {
     setActiveTab(tabId);
@@ -102,11 +100,11 @@ export function Navbar({
                 BAKARYA
               </span>
               <span className="hidden xs:inline-block text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest px-1.5 sm:px-2 py-0.5 rounded-full bg-[#167D78]/15 text-[#167D78] truncate">
-                Gugus 2 HSU
+                Guru Banua Kalsel
               </span>
             </div>
             <p className="text-[11px] text-[#727782] hidden md:block font-medium truncate">
-              Kelas Digitalisasi Gugus 2 HSU • BOS Kinerja Terbaik 2026
+              Inovasi Media Pendidik Kalimantan Selatan • Mitra BPMP Kalsel
             </p>
           </div>
         </div>

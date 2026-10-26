@@ -86,9 +86,9 @@ export async function seedFirestoreDatabase(mode: "full" | "clean" = "full"): Pr
         username: "superadmin.bakarya",
         displayName: auth?.currentUser?.displayName || "Super Administrator BAKARYA",
         email: adminEmail,
-        institution: "Disdikbud Kab. HSU",
-        district: "Amuntai Tengah",
-        bio: "Fasilitator Digitalisasi & Super Admin Pengelola Utama Portal Pembelajaran Digital BAKARYA Gugus 2 HSU.",
+        institution: "Inovator Komunitas Guru Banua Kalsel",
+        district: "Amuntai Tengah, Kab. HSU",
+        bio: "Inovator Komunitas Guru Banua & Super Admin Pengelola Portal Pembelajaran Digital BAKARYA Kalimantan Selatan.",
         role: "superAdmin",
         accountStatus: "active",
         publicProfileEnabled: true,
@@ -143,7 +143,7 @@ export async function seedFirestoreDatabase(mode: "full" | "clean" = "full"): Pr
       message:
         mode === "clean"
           ? `Database berhasil diinisialisasi bersih (Clean Slate)! Akun Super Admin (${adminEmail}) dan taksonomi telah aktif di Cloud Firestore. Koleksi karya 100% kosong (tanpa data mock).`
-          : "Database berhasil diinisialisasi penuh dengan data kurasi Gugus 2 HSU dan struktur taksonomi.",
+          : "Database berhasil diinisialisasi penuh dengan data kurasi inspiratif Guru Banua Kalsel dan struktur taksonomi.",
       counts: {
         users: usersToSeed.length,
         works: worksToSeed.length,

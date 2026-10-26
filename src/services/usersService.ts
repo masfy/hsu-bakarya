@@ -26,7 +26,11 @@ export async function fetchUsersFromFirestore(): Promise<UserAccount[] | null> {
       const uid = d.id;
       // Jangan masukkan jika akun berstatus isDeleted di Firestore atau ada dalam daftar akun terhapus
       if (!data.isDeleted && !deletedUids.includes(uid) && !deletedUids.includes(data.uid)) {
-        list.push({ uid, ...data, email: data.email || "" });
+        let avatar = data.avatar || "/default-avatar.png";
+        if (avatar.includes("photo-1534528741775-53994a69daeb")) {
+          avatar = "/default-avatar.png";
+        }
+        list.push({ uid, ...data, email: data.email || "", avatar });
       }
     });
     return list;
@@ -44,6 +48,9 @@ export async function saveUserToFirestore(user: UserAccount): Promise<boolean> {
     const cleanUser = JSON.parse(JSON.stringify(user));
     delete cleanUser.tempPassword;
     delete cleanUser.password;
+    if (!cleanUser.avatar || cleanUser.avatar.includes("photo-1534528741775-53994a69daeb")) {
+      cleanUser.avatar = "/default-avatar.png";
+    }
     await setDoc(userRef, cleanUser, { merge: true });
     return true;
 

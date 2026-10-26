@@ -188,6 +188,9 @@ export default function App() {
                 safe.role = "superAdmin";
                 safe.accountStatus = "active";
               }
+              if (!safe.avatar || safe.avatar.includes("photo-1534528741775-53994a69daeb")) {
+                safe.avatar = BAKARYA_DEFAULT_AVATAR_URL;
+              }
               return safe;
             });
         }

@@ -3,6 +3,11 @@ export const getDriveDirectImageUrl = (urlOrId: string | undefined | null, size:
   if (!urlOrId) return "";
   const trimmed = urlOrId.trim();
   
+  // Jika avatar lama masih merujuk ke unsplash default lawas, arahkan langsung ke avatar resmi BAKARYA
+  if (trimmed.includes("photo-1534528741775-53994a69daeb")) {
+    return "/default-avatar.png";
+  }
+
   // Jika path lokal atau data URI, langsung kembalikan path tersebut
   if (trimmed.startsWith("/") || trimmed.startsWith("./") || trimmed.startsWith("data:") || trimmed.startsWith("blob:")) {
     return trimmed;

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   X,
@@ -13,9 +13,20 @@ import {
   School,
   MapPin,
   RefreshCw,
+  KeyRound,
 } from "lucide-react";
 import { UserAccount } from "../../types";
-import { HSU_DISTRICTS, KALSEL_REGIONS } from "../../data/initialData";
+import { KALSEL_REGIONS, getDistrictsForRegion } from "../../data/initialData";
+
+// Generator Kode Captcha Keamanan (Karakter Unik & Non-Ambigu)
+const generateCaptchaCode = () => {
+  const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  let result = "";
+  for (let i = 0; i < 5; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
 
 export interface GoogleAuthPayload {
   uid: string;
@@ -68,14 +79,42 @@ export function GoogleAuthModal({
   const [selectedRegion, setSelectedRegion] = useState<string>("Kab. Hulu Sungai Utara (HSU)");
   const [district, setDistrict] = useState<string>("Amuntai Tengah");
 
+  // State Captcha Keamanan
+  const [captchaCode, setCaptchaCode] = useState<string>(() => generateCaptchaCode());
+  const [captchaInput, setCaptchaInput] = useState<string>("");
+  const [captchaError, setCaptchaError] = useState<string | null>(null);
+
+  const availableDistricts = useMemo(() => getDistrictsForRegion(selectedRegion), [selectedRegion]);
+
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [infoMsg, setInfoMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Handler Masuk via Google (1-Klik)
+  // Validasi Captcha sebelum menghubungkan akun Google
+  const validateCaptcha = () => {
+    if (!captchaInput.trim()) {
+      setCaptchaError("Mohon ketik 5 karakter kode captcha keamanan di atas.");
+      return false;
+    }
+    if (captchaInput.trim().toUpperCase() !== captchaCode.toUpperCase()) {
+      setCaptchaError("Kode captcha tidak cocok. Silakan coba kode baru yang tertera.");
+      setCaptchaCode(generateCaptchaCode());
+      setCaptchaInput("");
+      return false;
+    }
+    setCaptchaError(null);
+    return true;
+  };
+
+  // Handler Masuk via Google (1-Klik setelah validasi Captcha)
   const handleGoogleLogin = async () => {
     setErrorMsg(null);
     setInfoMsg(null);
+
+    if (!validateCaptcha()) {
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const res = await onGoogleSignIn();
@@ -100,10 +139,15 @@ export function GoogleAuthModal({
     }
   };
 
-  // Handler Daftar via Google (Langkah 1: Verifikasi Akun Google)
+  // Handler Daftar via Google (Langkah 1: Verifikasi Akun Google setelah validasi Captcha)
   const handleGoogleRegisterAuth = async () => {
     setErrorMsg(null);
     setInfoMsg(null);
+
+    if (!validateCaptcha()) {
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const res = await onGoogleSignIn();
@@ -285,6 +329,61 @@ export function GoogleAuthModal({
               Masuk otomatis menggunakan <strong>Akun Google / Belajar.id</strong> resmi Anda. Tanpa perlu mengetik atau mengingat kata sandi manual.
             </div>
 
+            {/* Widget Captcha Keamanan */}
+            <div className="p-3.5 rounded-2xl bg-[#F8F7F2] border border-[#14213D]/15 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#14213D] flex items-center gap-1.5">
+                  <KeyRound className="w-3.5 h-3.5 text-[#167D78]" />
+                  Verifikasi Keamanan (Captcha)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCaptchaCode(generateCaptchaCode());
+                    setCaptchaInput("");
+                    setCaptchaError(null);
+                  }}
+                  className="text-[10px] font-bold text-[#167D78] hover:text-[#14213D] flex items-center gap-1 cursor-pointer transition-colors"
+                  title="Ganti Kode Baru"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Acak Kode</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {/* Visual Badge Captcha */}
+                <div className="relative select-none px-4 py-2 rounded-xl bg-white border border-[#14213D]/20 shadow-inner flex items-center justify-center tracking-[0.25em] font-mono font-black text-lg text-[#14213D] overflow-hidden shrink-0 min-w-[125px] h-11">
+                  <div className="absolute inset-0 opacity-15 pointer-events-none bg-[radial-gradient(#167D78_1px,transparent_1px)] [background-size:6px_6px]" />
+                  <div className="absolute w-full h-[1.5px] bg-[#167D78]/30 -rotate-6 top-1/2 pointer-events-none" />
+                  <div className="absolute w-full h-[1.5px] bg-[#F2B84B]/40 rotate-6 top-1/2 pointer-events-none" />
+                  <span className="relative z-10 font-black italic drop-shadow-[0_1px_1px_rgba(0,0,0,0.12)]">
+                    {captchaCode}
+                  </span>
+                </div>
+
+                {/* Input Captcha */}
+                <input
+                  type="text"
+                  maxLength={5}
+                  value={captchaInput}
+                  onChange={(e) => {
+                    setCaptchaInput(e.target.value.toUpperCase());
+                    if (captchaError) setCaptchaError(null);
+                  }}
+                  placeholder="Ketik 5 kode di kiri..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#14213D]/15 text-xs font-bold uppercase tracking-wider text-[#14213D] outline-none focus:border-[#167D78] focus:ring-1 focus:ring-[#167D78] transition-all"
+                />
+              </div>
+
+              {captchaError && (
+                <div className="flex items-center gap-1.5 text-[11px] text-rose-600 font-bold">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{captchaError}</span>
+                </div>
+              )}
+            </div>
+
             <button
               type="button"
               onClick={handleGoogleLogin}
@@ -329,6 +428,9 @@ export function GoogleAuthModal({
                   onClick={() => {
                     setMode("register");
                     setErrorMsg(null);
+                    setCaptchaError(null);
+                    setCaptchaCode(generateCaptchaCode());
+                    setCaptchaInput("");
                   }}
                   className="font-bold text-[#167D78] hover:underline cursor-pointer"
                 >
@@ -350,6 +452,59 @@ export function GoogleAuthModal({
               <p>
                 Hubungkan <strong>Akun Google / Belajar.id</strong> Anda terlebih dahulu. Setelah berhasil diverifikasi, Anda cukup melengkapi asal sekolah dan wilayah tugas.
               </p>
+            </div>
+
+            {/* Widget Captcha Keamanan di Tab Daftar */}
+            <div className="p-3.5 rounded-2xl bg-[#F8F7F2] border border-[#14213D]/15 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#14213D] flex items-center gap-1.5">
+                  <KeyRound className="w-3.5 h-3.5 text-[#167D78]" />
+                  Verifikasi Keamanan (Captcha)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCaptchaCode(generateCaptchaCode());
+                    setCaptchaInput("");
+                    setCaptchaError(null);
+                  }}
+                  className="text-[10px] font-bold text-[#167D78] hover:text-[#14213D] flex items-center gap-1 cursor-pointer transition-colors"
+                  title="Ganti Kode Baru"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Acak Kode</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="relative select-none px-4 py-2 rounded-xl bg-white border border-[#14213D]/20 shadow-inner flex items-center justify-center tracking-[0.25em] font-mono font-black text-lg text-[#14213D] overflow-hidden shrink-0 min-w-[125px] h-11">
+                  <div className="absolute inset-0 opacity-15 pointer-events-none bg-[radial-gradient(#167D78_1px,transparent_1px)] [background-size:6px_6px]" />
+                  <div className="absolute w-full h-[1.5px] bg-[#167D78]/30 -rotate-6 top-1/2 pointer-events-none" />
+                  <div className="absolute w-full h-[1.5px] bg-[#F2B84B]/40 rotate-6 top-1/2 pointer-events-none" />
+                  <span className="relative z-10 font-black italic drop-shadow-[0_1px_1px_rgba(0,0,0,0.12)]">
+                    {captchaCode}
+                  </span>
+                </div>
+
+                <input
+                  type="text"
+                  maxLength={5}
+                  value={captchaInput}
+                  onChange={(e) => {
+                    setCaptchaInput(e.target.value.toUpperCase());
+                    if (captchaError) setCaptchaError(null);
+                  }}
+                  placeholder="Ketik 5 kode di kiri..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#14213D]/15 text-xs font-bold uppercase tracking-wider text-[#14213D] outline-none focus:border-[#167D78] focus:ring-1 focus:ring-[#167D78] transition-all"
+                />
+              </div>
+
+              {captchaError && (
+                <div className="flex items-center gap-1.5 text-[11px] text-rose-600 font-bold">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{captchaError}</span>
+                </div>
+              )}
             </div>
 
             <button
@@ -464,7 +619,12 @@ export function GoogleAuthModal({
               <div className="relative">
                 <select
                   value={selectedRegion}
-                  onChange={(e) => setSelectedRegion(e.target.value)}
+                  onChange={(e) => {
+                    const newReg = e.target.value;
+                    setSelectedRegion(newReg);
+                    const subList = getDistrictsForRegion(newReg);
+                    setDistrict(subList[0] || "");
+                  }}
                   disabled={isSubmitting}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs font-bold text-[#14213D] outline-none focus:border-[#167D78] focus:ring-1 focus:ring-[#167D78] cursor-pointer appearance-none pr-9 disabled:opacity-60"
                 >
@@ -480,31 +640,29 @@ export function GoogleAuthModal({
               </div>
             </div>
 
-            {/* Jika Wilayah HSU, tampilkan pilihan Kecamatan */}
-            {selectedRegion.includes("HSU") && (
-              <div>
-                <label className="block text-xs font-extrabold uppercase text-[#14213D] mb-1">
-                  Kecamatan di HSU *
-                </label>
-                <div className="relative">
-                  <select
-                    value={district}
-                    onChange={(e) => setDistrict(e.target.value)}
-                    disabled={isSubmitting}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs font-bold text-[#14213D] outline-none focus:border-[#167D78] focus:ring-1 focus:ring-[#167D78] cursor-pointer appearance-none pr-9 disabled:opacity-60"
-                  >
-                    {HSU_DISTRICTS.map((kec) => (
-                      <option key={kec} value={kec}>
-                        {kec}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#727782]">
-                    <ChevronDown className="w-4 h-4" />
-                  </div>
+            {/* Pilihan Kecamatan di Kabupaten / Kota Terpilih */}
+            <div>
+              <label className="block text-xs font-extrabold uppercase text-[#14213D] mb-1">
+                Kecamatan / Wilayah Tugas *
+              </label>
+              <div className="relative">
+                <select
+                  value={district}
+                  onChange={(e) => setDistrict(e.target.value)}
+                  disabled={isSubmitting}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs font-bold text-[#14213D] outline-none focus:border-[#167D78] focus:ring-1 focus:ring-[#167D78] cursor-pointer appearance-none pr-9 disabled:opacity-60"
+                >
+                  {availableDistricts.map((kec) => (
+                    <option key={kec} value={kec}>
+                      {kec}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#727782]">
+                  <ChevronDown className="w-4 h-4" />
                 </div>
               </div>
-            )}
+            </div>
 
             <button
               type="submit"

@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { X, Upload, Link as LinkIcon, Sparkles, AlertTriangle, Check, ChevronDown } from "lucide-react";
 import { UserAccount } from "../../types";
-import { PRESET_AVATARS, HSU_DISTRICTS } from "../../data/initialData";
+import { PRESET_AVATARS, KALSEL_REGIONS, getDistrictsForRegion } from "../../data/initialData";
 import { getDriveDirectImageUrl } from "../../utils/drive";
 
 interface SelfProfileModalProps {
@@ -54,16 +54,23 @@ function compressImageFile(file: File, maxSize: number = 160, quality: number = 
 }
 
 export function SelfProfileModal({ user, onClose, onSave }: SelfProfileModalProps) {
-  const normalizeDistrict = (d?: string) => {
-    if (!d) return "Amuntai Tengah";
-    const found = HSU_DISTRICTS.find((k) => d.toLowerCase().includes(k.toLowerCase()));
-    return found || "Amuntai Tengah";
+  const parseRegionAndDistrict = (d?: string) => {
+    if (!d) return { region: "Kab. Hulu Sungai Utara (HSU)", district: "Amuntai Tengah" };
+    const matchedRegion =
+      KALSEL_REGIONS.find((r) => d.toLowerCase().includes(r.toLowerCase())) ||
+      (d.includes("HSU") ? "Kab. Hulu Sungai Utara (HSU)" : "Kab. Hulu Sungai Utara (HSU)");
+    const subList = getDistrictsForRegion(matchedRegion);
+    const matchedKec = subList.find((k) => d.toLowerCase().includes(k.toLowerCase())) || subList[0] || "Amuntai Tengah";
+    return { region: matchedRegion, district: matchedKec };
   };
 
+  const initialLoc = parseRegionAndDistrict(user.district);
   const [displayName, setDisplayName] = useState(user.displayName || "");
   const [institution, setInstitution] = useState(user.institution || "");
-  const [district, setDistrict] = useState<string>(normalizeDistrict(user.district));
+  const [selectedRegion, setSelectedRegion] = useState<string>(initialLoc.region);
+  const [district, setDistrict] = useState<string>(initialLoc.district);
   const [bio, setBio] = useState(user.bio || "");
+  const availableDistricts = useMemo(() => getDistrictsForRegion(selectedRegion), [selectedRegion]);
   const [avatar, setAvatar] = useState(user.avatar || PRESET_AVATARS[0]);
   const [photoTab, setPhotoTab] = useState<"link" | "preset" | "upload">("link");
   const [linkInput, setLinkInput] = useState(
@@ -112,10 +119,11 @@ export function SelfProfileModal({ user, onClose, onSave }: SelfProfileModalProp
       setErrorMsg("Password baru minimal 6 karakter.");
       return;
     }
+    const fullDistrict = `${district}, ${selectedRegion}`;
     onSave({
       displayName,
       institution,
-      district,
+      district: fullDistrict,
       bio,
       avatar: getDriveDirectImageUrl(avatar, "w400"),
       ...(newPassword ? { tempPassword: newPassword } : {}),
@@ -342,24 +350,53 @@ export function SelfProfileModal({ user, onClose, onSave }: SelfProfileModalProp
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-bold uppercase mb-1 text-[#14213D]">
-              Kecamatan / Wilayah Tugas *
-            </label>
-            <div className="relative">
-              <select
-                value={district}
-                onChange={(e) => setDistrict(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs font-bold text-[#14213D] outline-none focus:border-[#167D78] focus:ring-1 focus:ring-[#167D78] cursor-pointer appearance-none pr-9"
-              >
-                {HSU_DISTRICTS.map((kec) => (
-                  <option key={kec} value={kec}>
-                    {kec}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#727782]">
-                <ChevronDown className="w-4 h-4" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold uppercase mb-1 text-[#14213D]">
+                Kabupaten / Kota se-Kalsel *
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedRegion}
+                  onChange={(e) => {
+                    const newReg = e.target.value;
+                    setSelectedRegion(newReg);
+                    const subList = getDistrictsForRegion(newReg);
+                    setDistrict(subList[0] || "");
+                  }}
+                  className="w-full px-3.5 py-2 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs font-bold text-[#14213D] outline-none focus:border-[#167D78] focus:ring-1 focus:ring-[#167D78] cursor-pointer appearance-none pr-9"
+                >
+                  {KALSEL_REGIONS.map((reg) => (
+                    <option key={reg} value={reg}>
+                      {reg}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#727782]">
+                  <ChevronDown className="w-4 h-4" />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase mb-1 text-[#14213D]">
+                Kecamatan / Wilayah Tugas *
+              </label>
+              <div className="relative">
+                <select
+                  value={district}
+                  onChange={(e) => setDistrict(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl bg-[#F8F7F2] border border-[#14213D]/15 text-xs font-bold text-[#14213D] outline-none focus:border-[#167D78] focus:ring-1 focus:ring-[#167D78] cursor-pointer appearance-none pr-9"
+                >
+                  {availableDistricts.map((kec) => (
+                    <option key={kec} value={kec}>
+                      {kec}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#727782]">
+                  <ChevronDown className="w-4 h-4" />
+                </div>
               </div>
             </div>
           </div>

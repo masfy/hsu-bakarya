@@ -90,9 +90,6 @@ export function Footer({ setActiveTab }: FooterProps) {
             <p className="text-xs text-[#727782] leading-relaxed">
               Mulai guru, dari guru, dan untuk guru di Kalimantan Selatan. Wadah terbuka untuk saling berbagi dan menginspirasi karya media pembelajaran digital Banua.
             </p>
-            <div className="mt-4 pt-3 border-t border-[#14213D]/10 text-[11px] text-[#727782]">
-              Didukung oleh <strong>Cloud Firestore</strong> & <strong>Vercel Edge</strong>.
-            </div>
           </div>
         </div>
 

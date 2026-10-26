@@ -12,6 +12,7 @@ import {
   INITIAL_CATEGORIES_DATA,
   INITIAL_SUBJECTS_DATA,
   INITIAL_MEDIA_TYPES,
+  BAKARYA_DEFAULT_AVATAR_URL,
 } from "../data/initialData";
 import { UserAccount, Work } from "../types";
 
@@ -96,7 +97,7 @@ export async function seedFirestoreDatabase(mode: "full" | "clean" = "full"): Pr
         deletedAt: null,
         deletedBy: null,
         lastLoginAt: new Date().toLocaleString("id-ID"),
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+        avatar: BAKARYA_DEFAULT_AVATAR_URL,
       };
       usersToSeed = [superAdminUser];
     } else {

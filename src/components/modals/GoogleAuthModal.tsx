@@ -16,7 +16,7 @@ import {
   KeyRound,
 } from "lucide-react";
 import { UserAccount } from "../../types";
-import { KALSEL_REGIONS, getDistrictsForRegion } from "../../data/initialData";
+import { KALSEL_REGIONS, getDistrictsForRegion, BAKARYA_DEFAULT_AVATAR_URL } from "../../data/initialData";
 
 // Generator Kode Captcha Keamanan (Karakter Unik & Non-Ambigu)
 const generateCaptchaCode = () => {
@@ -200,9 +200,7 @@ export function GoogleAuthModal({
         displayName: cleanName,
         institution: cleanInst,
         district: fullDistrict,
-        avatar:
-          googleProfile.photoURL ||
-          "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+        avatar: googleProfile.photoURL || BAKARYA_DEFAULT_AVATAR_URL,
       });
 
       if (!res.success) {
@@ -552,12 +550,13 @@ export function GoogleAuthModal({
             <div className="p-3.5 rounded-2xl bg-[#F8F7F2] border border-[#14213D]/15 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <img
-                  src={
-                    googleProfile.photoURL ||
-                    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80"
-                  }
+                  src={googleProfile.photoURL || BAKARYA_DEFAULT_AVATAR_URL}
                   alt={googleProfile.displayName}
                   className="w-10 h-10 rounded-xl object-cover border border-[#167D78] shrink-0"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = BAKARYA_DEFAULT_AVATAR_URL;
+                  }}
                 />
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 text-[10px] font-black uppercase text-[#167D78]">

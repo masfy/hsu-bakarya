@@ -9,7 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { UserRole, UserAccount } from "../../types";
-import { BAKARYA_LOGO_URL, getDriveDirectImageUrl } from "../../utils/drive";
+import { BAKARYA_LOGO_URL, BAKARYA_DEFAULT_AVATAR_URL, getDriveDirectImageUrl } from "../../utils/drive";
 
 interface NavbarProps {
   activeTab: string;
@@ -175,7 +175,7 @@ export function Navbar({
                     className="w-6 h-6 rounded-lg object-cover border border-[#F2B84B] bg-white shrink-0"
                     onError={(e) => {
                       e.currentTarget.onerror = null;
-                      e.currentTarget.src = "https://placehold.co/100x100/14213D/F2B84B?text=U";
+                      e.currentTarget.src = BAKARYA_DEFAULT_AVATAR_URL;
                     }}
                   />
                   <span className="hidden md:inline max-w-[110px] truncate">

@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { X, Link as LinkIcon, AlertTriangle, ChevronDown } from "lucide-react";
 import { UserAccount, UserRole, AccountStatus } from "../../types";
-import { PRESET_AVATARS, KALSEL_REGIONS, getDistrictsForRegion } from "../../data/initialData";
+import { PRESET_AVATARS, KALSEL_REGIONS, getDistrictsForRegion, BAKARYA_DEFAULT_AVATAR_URL } from "../../data/initialData";
 import { getDriveDirectImageUrl } from "../../utils/drive";
 
 interface UserAccountModalProps {
@@ -131,8 +131,7 @@ export function UserAccountModal({
                 className="w-16 h-16 rounded-2xl object-cover border-2 border-[#F2B84B] shadow-sm shrink-0 bg-white"
                 onError={(e) => {
                   e.currentTarget.onerror = null;
-                  e.currentTarget.src =
-                    "https://placehold.co/150x150/14213D/F2B84B?text=User";
+                  e.currentTarget.src = BAKARYA_DEFAULT_AVATAR_URL;
                 }}
               />
               <div className="space-y-1.5 flex-1">

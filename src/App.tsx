@@ -31,6 +31,7 @@ import {
   BAKARYA_LOGO_URL,
   BAKARYA_FAVICON_URL,
   BAKARYA_DEFAULT_THUMBNAIL_URL,
+  BAKARYA_DEFAULT_AVATAR_URL,
 } from "./utils/drive";
 import { getWorkEffectiveTime, getWorkApprovalTime } from "./utils/date";
 import { auth, isFirebaseConfigured, googleProvider } from "./services/firebase";
@@ -426,7 +427,7 @@ export default function App() {
             deletedAt: null,
             deletedBy: null,
             lastLoginAt: new Date().toLocaleString("id-ID"),
-            avatar: firebaseUser.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+            avatar: firebaseUser.photoURL || BAKARYA_DEFAULT_AVATAR_URL,
           };
           saveUserToFirestore(found);
           setUsersList((prev) => [found!, ...prev.filter((u) => u.uid !== found!.uid)]);
@@ -807,7 +808,7 @@ export default function App() {
             deletedAt: null,
             deletedBy: null,
             lastLoginAt: nowWITA,
-            avatar: googleUser.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+            avatar: googleUser.photoURL || BAKARYA_DEFAULT_AVATAR_URL,
           };
           saveUserToFirestore(targetUser);
           setUsersList((prev) => [targetUser!, ...prev.filter((u) => u.uid !== targetUid)]);
@@ -924,7 +925,7 @@ export default function App() {
       deletedAt: null,
       deletedBy: null,
       lastLoginAt: isSuper ? nowWITA : "Menunggu Kurasi Akun",
-      avatar: payload.avatar,
+      avatar: payload.avatar || BAKARYA_DEFAULT_AVATAR_URL,
     };
 
     setUsersList((prev) => [newContributor, ...prev.filter((u) => u.uid !== payload.uid)]);
@@ -1615,7 +1616,7 @@ export default function App() {
                   uid: "uid-user-" + Date.now(),
                   ...userData,
                   district: newDistrict,
-                  avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+                  avatar: userData.avatar || BAKARYA_DEFAULT_AVATAR_URL,
                   publicProfileEnabled: true,
                   isDeleted: false,
                   deletedAt: null,

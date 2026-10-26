@@ -36,3 +36,4 @@ export const BAKARYA_LOGO_FULL_URL = "/bakarya-logo-full.png";
 export const BAKARYA_FAVICON_URL = "/favicon.png";
 export const BAKARYA_OG_IMAGE_URL = "/og-image.png";
 export const BAKARYA_DEFAULT_THUMBNAIL_URL = "/thumbnail-default.png";
+export const BAKARYA_DEFAULT_AVATAR_URL = "/default-avatar.png";

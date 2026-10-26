@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { Work, UserAccount, UserRole } from "../types";
 import { StatusBadge } from "../components/common/StatusBadge";
-import { getDriveDirectImageUrl, BAKARYA_DEFAULT_THUMBNAIL_URL } from "../utils/drive";
+import { getDriveDirectImageUrl, BAKARYA_DEFAULT_THUMBNAIL_URL, BAKARYA_DEFAULT_AVATAR_URL } from "../utils/drive";
 import { getWorkCreatedTime } from "../utils/date";
 
 interface DashboardViewProps {
@@ -336,7 +336,7 @@ export function DashboardView({
                 className="w-20 h-20 rounded-2xl object-cover border-2 border-[#F2B84B] shadow-md bg-white"
                 onError={(e) => {
                   e.currentTarget.onerror = null;
-                  e.currentTarget.src = "https://placehold.co/150x150/14213D/F2B84B?text=Foto";
+                  e.currentTarget.src = BAKARYA_DEFAULT_AVATAR_URL;
                 }}
               />
               <div className="absolute inset-0 rounded-2xl bg-[#14213D]/70 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">

@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { X, Upload, Link as LinkIcon, Sparkles, AlertTriangle, Check, ChevronDown } from "lucide-react";
 import { UserAccount } from "../../types";
-import { PRESET_AVATARS, KALSEL_REGIONS, getDistrictsForRegion } from "../../data/initialData";
+import { PRESET_AVATARS, KALSEL_REGIONS, getDistrictsForRegion, BAKARYA_DEFAULT_AVATAR_URL } from "../../data/initialData";
 import { getDriveDirectImageUrl } from "../../utils/drive";
 
 interface SelfProfileModalProps {
@@ -181,8 +181,7 @@ export function SelfProfileModal({ user, onClose, onSave }: SelfProfileModalProp
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     e.currentTarget.onerror = null;
-                    e.currentTarget.src =
-                      "https://placehold.co/150x150/14213D/F2B84B?text=Foto";
+                    e.currentTarget.src = BAKARYA_DEFAULT_AVATAR_URL;
                   }}
                 />
               </div>

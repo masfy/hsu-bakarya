@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { MapPin, Users } from "lucide-react";
 import { UserAccount, Work } from "../types";
-import { getDriveDirectImageUrl } from "../utils/drive";
+import { getDriveDirectImageUrl, BAKARYA_DEFAULT_AVATAR_URL } from "../utils/drive";
 
 interface ContributorsViewProps {
   usersList: UserAccount[];
@@ -81,7 +81,7 @@ export function ContributorsView({
                     className="w-16 h-16 rounded-2xl object-cover border-2 border-[#F2B84B] shadow-sm shrink-0 bg-white"
                     onError={(e) => {
                       e.currentTarget.onerror = null;
-                      e.currentTarget.src = "https://placehold.co/150x150/14213D/F2B84B?text=Guru";
+                      e.currentTarget.src = BAKARYA_DEFAULT_AVATAR_URL;
                     }}
                   />
                   <div>

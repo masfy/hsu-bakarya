@@ -480,7 +480,7 @@ export const CONTRIBUTORS: UserAccount[] = [
     deletedAt: null,
     deletedBy: null,
     lastLoginAt: "16 Okt 2026, 22:00 WITA",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+    avatar: "/default-avatar.png",
   },
 ];
 
@@ -827,7 +827,10 @@ export const INITIAL_MONTHLY_ANALYTICS: MonthlyAnalytics[] = [
   { monthKey: "Okt 2026", visits: 1845, pageViews: 5490, outboundClicks: 1230 },
 ];
 
+export const BAKARYA_DEFAULT_AVATAR_URL = "/default-avatar.png";
+
 export const PRESET_AVATARS = [
+  "/default-avatar.png",
   "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
   "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80",
   "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80",

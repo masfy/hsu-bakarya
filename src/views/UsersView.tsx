@@ -56,7 +56,11 @@ export function UsersView({
     // Sembunyikan Super Admin dari Admin & Kontributor
     if (role !== "superAdmin" && u.role === "superAdmin") return false;
     if (!showDeletedUsers && u.isDeleted) return false;
-    if (userFilterRole !== "all" && u.role !== userFilterRole) return false;
+    if (userFilterRole === "pending") {
+      if (u.accountStatus !== "pending") return false;
+    } else if (userFilterRole !== "all" && u.role !== userFilterRole) {
+      return false;
+    }
     const q = userSearchQuery.toLowerCase().trim();
     if (!q) return true;
     return (
@@ -66,6 +70,8 @@ export function UsersView({
       u.institution.toLowerCase().includes(q)
     );
   });
+
+  const pendingUsersCount = usersList.filter((u) => !u.isDeleted && u.accountStatus === "pending").length;
 
   return (
     <motion.div
@@ -94,12 +100,39 @@ export function UsersView({
         <button
           type="button"
           onClick={onOpenAddUserModal}
-          className="bg-[#F2B84B] hover:bg-[#e3a839] text-[#14213D] font-extrabold text-xs sm:text-sm px-5 py-3 rounded-xl shadow-md transition-all flex items-center gap-2 shrink-0"
+          className="bg-[#F2B84B] hover:bg-[#e3a839] text-[#14213D] font-extrabold text-xs sm:text-sm px-5 py-3 rounded-xl shadow-md transition-all flex items-center gap-2 shrink-0 cursor-pointer"
         >
           <UserPlus className="w-4 h-4" />
           <span>Tambah Akun Peserta</span>
         </button>
       </div>
+
+      {/* Alert Banner jika ada Pendaftar Baru Menunggu Persetujuan */}
+      {pendingUsersCount > 0 && (
+        <div className="bg-amber-50 border-2 border-amber-300 p-5 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-center gap-3.5">
+            <span className="relative flex h-3.5 w-3.5 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-amber-500"></span>
+            </span>
+            <div>
+              <h4 className="text-sm font-black text-amber-900 uppercase tracking-wider">
+                Ada {pendingUsersCount} Pendaftar Baru Menunggu Persetujuan
+              </h4>
+              <p className="text-xs text-amber-800 mt-0.5">
+                Pengguna baru telah mendaftar melalui Google dan otomatis masuk ke antrean. Klik tombol <strong>Setujui Akun</strong> pada daftar di bawah untuk memberikan akses.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setUserFilterRole(userFilterRole === "pending" ? "all" : "pending")}
+            className="bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl transition-colors shadow-sm shrink-0 cursor-pointer"
+          >
+            {userFilterRole === "pending" ? "Tampilkan Semua Akun" : "Lihat Pendaftar Tertunda"}
+          </button>
+        </div>
+      )}
 
       {/* Filter and Table container */}
       <div className="bg-white p-6 rounded-3xl border border-[#14213D]/10 shadow-sm space-y-5">
@@ -119,9 +152,10 @@ export function UsersView({
             <select
               value={userFilterRole}
               onChange={(e) => setUserFilterRole(e.target.value)}
-              className="bg-[#F8F7F2] border border-[#14213D]/15 rounded-xl px-3.5 py-2.5 text-xs font-bold text-[#14213D] outline-none focus:border-[#167D78]"
+              className="bg-[#F8F7F2] border border-[#14213D]/15 rounded-xl px-3.5 py-2.5 text-xs font-bold text-[#14213D] outline-none focus:border-[#167D78] cursor-pointer"
             >
-              <option value="all">Semua Hak Akses (Role)</option>
+              <option value="all">Semua Hak Akses & Status</option>
+              <option value="pending">⏳ Menunggu Persetujuan ({pendingUsersCount})</option>
               <option value="contributor">Kontributor (Guru/Peserta)</option>
               <option value="admin">Admin Kurator</option>
               {role === "superAdmin" && <option value="superAdmin">Super Admin</option>}
@@ -130,7 +164,7 @@ export function UsersView({
             <button
               type="button"
               onClick={() => setShowDeletedUsers(!showDeletedUsers)}
-              className={`px-3.5 py-2.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 ${
+              className={`px-3.5 py-2.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 cursor-pointer ${
                 showDeletedUsers
                   ? "bg-rose-600 text-white border-rose-600 shadow-sm"
                   : "bg-[#F8F7F2] text-[#727782] border-[#14213D]/15 hover:bg-gray-100"

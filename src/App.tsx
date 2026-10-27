@@ -50,11 +50,16 @@ import {
   incrementWorkViewsInFirestore,
   incrementWorkClicksInFirestore,
   addModerationLogInFirestore,
+  getDeletedWorkIds,
+  markWorkAsDeletedLocally,
+  subscribeWorksFromFirestore,
 } from "./services/worksService";
 import {
   fetchUsersFromFirestore,
   saveUserToFirestore,
   deleteUserInFirestore,
+  subscribeUsersFromFirestore,
+  deduplicateUsers,
 } from "./services/usersService";
 import {
   fetchRealDailyAnalytics,
@@ -155,17 +160,29 @@ export default function App() {
     try {
       window.location.hash = tab;
     } catch {}
+    if (tab === "pengguna" || tab === "dashboard") {
+      handleRefreshDataFromFirestore();
+    }
   };
 
   const [works, setWorks] = useState<Work[]>(() => {
+    let deletedWorkIds: string[] = [];
+    try {
+      deletedWorkIds = JSON.parse(localStorage.getItem("bakarya_deleted_work_ids") || "[]");
+    } catch {}
+
     try {
       const cached = localStorage.getItem("bakarya_cached_works");
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.filter((w: Work) => !w.isDeleted && !deletedWorkIds.includes(w.id));
+        }
       }
     } catch {}
-    return isFirebaseConfigured ? [] : INITIAL_WORKS;
+    return isFirebaseConfigured
+      ? []
+      : INITIAL_WORKS.filter((w) => !w.isDeleted && !deletedWorkIds.includes(w.id));
   });
 
   const [usersList, setUsersList] = useState<UserAccount[]>(() => {
@@ -180,7 +197,7 @@ export default function App() {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
           // Bersihkan tempPassword lawas dari localStorage agar tidak mengunci pengguna
-          return parsed
+          const valid = parsed
             .filter((u: UserAccount) => !deletedUids.includes(u.uid) && !u.isDeleted)
             .map((u: UserAccount) => {
               const { tempPassword, ...safe } = u;
@@ -193,6 +210,7 @@ export default function App() {
               }
               return safe;
             });
+          return deduplicateUsers(valid);
         }
       }
     } catch {}
@@ -200,7 +218,7 @@ export default function App() {
       const superAdmin = CONTRIBUTORS.find((u) => u.role === "superAdmin");
       return superAdmin && !deletedUids.includes(superAdmin.uid) ? [superAdmin] : [];
     }
-    return CONTRIBUTORS.filter((u) => !deletedUids.includes(u.uid) && !u.isDeleted);
+    return deduplicateUsers(CONTRIBUTORS.filter((u) => !deletedUids.includes(u.uid) && !u.isDeleted));
   });
 
   // Sync usersList and works to localStorage as instant offline cache
@@ -327,53 +345,72 @@ export default function App() {
     if (isFirebaseConfigured) {
       fetchWorksFromFirestore().then((remoteWorks) => {
         if (remoteWorks !== null) {
-          setWorks((prev) => {
-            const remoteMap = new Map(remoteWorks.map((w) => [w.id, w]));
-            // Pertahankan karya lokal yang belum tersimpan di Firestore agar tidak hilang saat refresh
-            const localOnly = prev.filter((w) => !remoteMap.has(w.id) && !w.isDeleted);
-            localOnly.forEach((w) => {
-              saveWorkToFirestore(w);
-            });
-            const merged = [...remoteWorks, ...localOnly];
-            try {
-              localStorage.setItem("bakarya_cached_works", JSON.stringify(merged));
-            } catch {}
-            return merged;
-          });
+          const deletedWorkIds = getDeletedWorkIds();
+          const validWorks = remoteWorks.filter(
+            (w) => !w.isDeleted && !deletedWorkIds.includes(w.id)
+          );
+          setWorks(validWorks);
+          try {
+            localStorage.setItem("bakarya_cached_works", JSON.stringify(validWorks));
+          } catch {}
         }
       });
       fetchUsersFromFirestore().then((remoteUsers) => {
-        if (remoteUsers !== null && remoteUsers.length > 0) {
+        if (remoteUsers !== null) {
           let deletedUids: string[] = [];
           try {
             deletedUids = JSON.parse(localStorage.getItem("bakarya_deleted_user_uids") || "[]");
           } catch {}
 
-          setUsersList((prev) => {
-            const activeRemote = remoteUsers.filter(
-              (remote) => !deletedUids.includes(remote.uid) && !remote.isDeleted
-            );
-            const merged = activeRemote.map((remote) => {
-              const local = prev.find((p) => p.uid === remote.uid);
-              if (
-                local &&
-                local.district &&
-                local.district !== "Amuntai Tengah" &&
-                (!remote.district || remote.district === "Amuntai Tengah")
-              ) {
-                return { ...remote, district: local.district };
-              }
-              return remote;
-            });
-            try {
-              localStorage.setItem("bakarya_cached_users", JSON.stringify(merged));
-            } catch {}
-            return merged;
-          });
+          const activeRemote = remoteUsers.filter(
+            (remote) => !deletedUids.includes(remote.uid) && !remote.isDeleted
+          );
+          const deduped = deduplicateUsers(activeRemote);
+          setUsersList(deduped);
+          try {
+            localStorage.setItem("bakarya_cached_users", JSON.stringify(deduped));
+          } catch {}
         }
       });
     }
   };
+
+  // Real-time listener dari Cloud Firestore agar data karya & pengguna selalu sinkron seketika
+  useEffect(() => {
+    if (!isFirebaseConfigured) return;
+
+    const unsubWorks = subscribeWorksFromFirestore((remoteWorks) => {
+      const deletedWorkIds = getDeletedWorkIds();
+      const validWorks = remoteWorks.filter(
+        (w) => !w.isDeleted && !deletedWorkIds.includes(w.id)
+      );
+      setWorks(validWorks);
+      try {
+        localStorage.setItem("bakarya_cached_works", JSON.stringify(validWorks));
+      } catch {}
+    });
+
+    const unsubUsers = subscribeUsersFromFirestore((remoteUsers) => {
+      let deletedUids: string[] = [];
+      try {
+        deletedUids = JSON.parse(localStorage.getItem("bakarya_deleted_user_uids") || "[]");
+      } catch {}
+
+      const activeRemote = remoteUsers.filter(
+        (u) => !deletedUids.includes(u.uid) && !u.isDeleted
+      );
+      const deduped = deduplicateUsers(activeRemote);
+      setUsersList(deduped);
+      try {
+        localStorage.setItem("bakarya_cached_users", JSON.stringify(deduped));
+      } catch {}
+    });
+
+    return () => {
+      unsubWorks();
+      unsubUsers();
+    };
+  }, []);
 
   // Sync with Firestore if configured
   useEffect(() => {
@@ -411,6 +448,26 @@ export default function App() {
           }
         }
 
+        // Jika akun berstatus pending atau dibekukan, jangan beri akses masuk ke dashboard
+        if (found && !isSuper) {
+          if (found.accountStatus === "pending" || found.accountStatus === "suspended") {
+            console.log("Akun belum disetujui / dibekukan, batalkan auto-login:", found.displayName);
+            try {
+              await signOut(auth);
+            } catch {}
+            setRole("public");
+            setLoggedInUserUid(null);
+            return;
+          }
+        }
+
+        // Jika akun belum terdaftar sama sekali di database dan bukan superAdmin
+        if (!found && !isSuper) {
+          setRole("public");
+          setLoggedInUserUid(null);
+          return;
+        }
+
         const effectiveRole: UserRole = isSuper ? "superAdmin" : (found?.role || "contributor");
         const effectiveUid = found?.uid || firebaseUser.uid;
 
@@ -433,7 +490,7 @@ export default function App() {
             avatar: firebaseUser.photoURL || BAKARYA_DEFAULT_AVATAR_URL,
           };
           saveUserToFirestore(found);
-          setUsersList((prev) => [found!, ...prev.filter((u) => u.uid !== found!.uid)]);
+          setUsersList((prev) => deduplicateUsers([found!, ...prev.filter((u) => u.uid !== found!.uid)]));
         }
 
         setLoggedInUserUid(effectiveUid);
@@ -931,7 +988,14 @@ export default function App() {
       avatar: payload.avatar || BAKARYA_DEFAULT_AVATAR_URL,
     };
 
-    setUsersList((prev) => [newContributor, ...prev.filter((u) => u.uid !== payload.uid)]);
+    setUsersList((prev) => {
+      const next = deduplicateUsers([newContributor, ...prev.filter((u) => u.uid !== payload.uid)]);
+      try {
+        localStorage.setItem("bakarya_cached_users", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
     if (isFirebaseConfigured) {
       await saveUserToFirestore(newContributor);
     }
@@ -950,9 +1014,17 @@ export default function App() {
       return { success: true };
     }
 
+    // Pendaftar baru non-superadmin: keluarkan sesi agar tidak menggantung sebagai login
+    if (isFirebaseConfigured && auth) {
+      try {
+        await signOut(auth);
+      } catch {}
+    }
+    setRole("public");
+    setLoggedInUserUid(null);
     setIsAuthModalOpen(false);
     triggerToast(
-      "Pendaftaran berhasil! Akun Anda sedang diverifikasi oleh Tim Kurasi Guru Banua Kalimantan Selatan.",
+      "Pendaftaran berhasil! Akun Anda telah terdaftar dan otomatis muncul di antrean persetujuan Tim Kurasi Admin.",
       "success"
     );
     return { success: true };
@@ -979,15 +1051,29 @@ export default function App() {
     triggerToast(`Hak akses ${targetUser.displayName} berhasil diubah menjadi ${newRole.toUpperCase()}.`, "success");
   };
 
-  const handleUpdateAccountStatus = (targetUid: string, newStatus: AccountStatus) => {
+  const handleUpdateAccountStatus = async (targetUid: string, newStatus: AccountStatus) => {
     const targetUser = usersList.find((u) => u.uid === targetUid);
     if (!targetUser) return;
 
     const updated = { ...targetUser, accountStatus: newStatus };
-    setUsersList((prev) => prev.map((u) => (u.uid === targetUid ? updated : u)));
-    if (isFirebaseConfigured) saveUserToFirestore(updated);
+    setUsersList((prev) => {
+      const next = prev.map((u) => (u.uid === targetUid ? updated : u));
+      try {
+        localStorage.setItem("bakarya_cached_users", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    if (isFirebaseConfigured) {
+      await saveUserToFirestore(updated);
+    }
 
-    triggerToast(`Status akses akun ${targetUser.displayName} disetel ke: ${newStatus.toUpperCase()}.`, "success");
+    const label =
+      newStatus === "active"
+        ? "disetujui dan aktif"
+        : newStatus === "suspended"
+        ? "dibekukan"
+        : "menunggu kurasi";
+    triggerToast(`Akun ${targetUser.displayName} berhasil ${label}.`, "success");
   };
 
   const handleDeleteUser = async (targetUid: string, mode: "soft" | "permanent" = "permanent") => {
@@ -1214,19 +1300,32 @@ export default function App() {
       return;
     }
 
-    try {
-      if (isFirebaseConfigured) {
-        await deleteWorkInFirestore(work.id);
-      }
-      setWorks((prev) => prev.filter((w) => w.id !== work.id));
-      if (selectedWork?.id === work.id) {
-        setSelectedWork(null);
-      }
-      setWorkConfirmDelete(null);
-      triggerToast(`Karya "${work.title}" berhasil dihapus dari sistem BAKARYA.`, "success");
-    } catch (err) {
-      console.error("Gagal menghapus karya:", err);
-      triggerToast("Terjadi kendala saat menghapus karya di Firestore.", "error");
+    // Catat karya terhapus secara permanen di cache lokal agar tidak pernah hidup kembali saat reload
+    markWorkAsDeletedLocally(work.id);
+    setWorks((prev) => {
+      const next = prev.filter((w) => w.id !== work.id);
+      try {
+        localStorage.setItem("bakarya_cached_works", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    if (selectedWork?.id === work.id) {
+      setSelectedWork(null);
+    }
+    setWorkConfirmDelete(null);
+
+    let firestoreDeleted = true;
+    if (isFirebaseConfigured) {
+      firestoreDeleted = await deleteWorkInFirestore(work.id);
+    }
+
+    if (firestoreDeleted) {
+      triggerToast(`Karya "${work.title}" berhasil dihapus permanen dari sistem BAKARYA.`, "success");
+    } else {
+      triggerToast(
+        `Karya "${work.title}" telah dihapus secara lokal dan dibekukan.`,
+        "warning"
+      );
     }
   };
 
